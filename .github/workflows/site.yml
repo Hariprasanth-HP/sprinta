@@ -49,6 +49,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BASE_PATH: ${{ secrets.VITE_BASE_PATH }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Upload GitHub Pages Artifact
         uses: actions/upload-pages-artifact@v3

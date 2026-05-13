@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    console.log('import.meta.env.VITE_BASE_PATHimport.meta.env.VITE_BASE_PATH', import.meta.env.VITE_BASE_PATH)
+    console.log('import.meta.env.VITE_BASE_PATHimport.meta.env.VITE_BASE_PATH', `${window.location.origin}${import.meta.env.VITE_BASE_PATH}/callback`)
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

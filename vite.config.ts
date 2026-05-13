@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
 		server: {
 			proxy: {
 				"/api": {
-					target: "http://localhost:4000", // Your backend URL
+					target: env.VITE_API_URL, // Your backend URL
 					changeOrigin: true,
 					rewrite: (path) => path.replace(/^\/api/, ""), // Remove /api prefix
 				},

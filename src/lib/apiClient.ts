@@ -4,6 +4,7 @@ import { setAuth } from "@/features/auth/stores/authSlice";
 import { store } from "../store";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+console.log('API_BASE', API_BASE);
 
 // Internal refresh queue to avoid race conditions
 let refreshingPromise: Promise<boolean> | null = null;

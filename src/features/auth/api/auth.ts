@@ -1,14 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
 import * as authApi from "@/features/auth/api/auth";
-import {
-	loginFailure,
-	loginStart,
-	loginSuccess,
-	logout,
-} from "@/features/auth/stores/authSlice";
+import { logout, loginFailure, loginStart, loginSuccess } from "@/features/auth/stores/authSlice";
 import { apiPost } from "@/lib/apiClient";
 import type { AppDispatch } from "@/store";
-import type { ApiResponse } from "@/types/api";
 import type {
 	AuthResponse,
 	GoogleLoginPayload,
@@ -18,38 +12,38 @@ import type {
 
 export async function login(
 	payload: LoginPayload,
-): Promise<ApiResponse<AuthResponse>> {
-	return apiPost<ApiResponse<AuthResponse>>("/auth/login", payload, {
+): Promise<AuthResponse> {
+	return apiPost<AuthResponse>("/auth/login", payload, {
 		withAuth: true,
 	});
 }
 
 export async function googleLogin(
 	payload: GoogleLoginPayload,
-): Promise<ApiResponse<AuthResponse>> {
-	return apiPost<ApiResponse<AuthResponse>>("/auth/google/login", payload, {
+): Promise<AuthResponse> {
+	return apiPost<AuthResponse>("/auth/google/login", payload, {
 		withAuth: true,
 	});
 }
 export async function signup(
 	payload: SignupPayload,
-): Promise<ApiResponse<AuthResponse>> {
-	return apiPost<ApiResponse<AuthResponse>>("/auth/signup", payload, {
+): Promise<AuthResponse> {
+	return apiPost<AuthResponse>("/auth/signup", payload, {
 		withAuth: true,
 	});
 }
 
 export async function googleSignup(
 	payload: GoogleLoginPayload,
-): Promise<ApiResponse<AuthResponse>> {
-	return apiPost<ApiResponse<AuthResponse>>("/google/signup", payload, {
+): Promise<AuthResponse> {
+	return apiPost<AuthResponse>("/google/signup", payload, {
 		withAuth: true,
 	});
 }
 export async function logoutApi(payload: {
 	refreshToken: string;
-}): Promise<ApiResponse<AuthResponse>> {
-	return apiPost<ApiResponse<AuthResponse>>("/auth/logout", payload, {
+}): Promise<AuthResponse> {
+	return apiPost<AuthResponse>("/auth/logout", payload, {
 		withAuth: true,
 	});
 }
@@ -58,8 +52,17 @@ export const loginUser =
 	(payload: LoginPayload) => async (dispatch: AppDispatch) => {
 		try {
 			dispatch(loginStart());
-			const res = await authApi.login(payload); // API call
-			dispatch(loginSuccess(res));
+			const res = await authApi.login(payload);
+			const authData = res as AuthResponse;
+
+			dispatch(
+				loginSuccess({
+					user: authData.data?.user ?? null,
+					session: authData.data?.session ?? undefined,
+					userTeam: authData.userTeam,
+					userProject: authData.userProject,
+				}),
+			);
 			return { data: res, error: undefined };
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Login failed";
@@ -78,21 +81,20 @@ export const googleLoginUser =
 				supabaseId: session.user.id,
 				name: session.user.user_metadata.full_name,
 				picture: session.user.user_metadata.avatar_url,
-				user: {
-					id: session.user.id,
-					email: session.user.email!,
-					name: session.user.user_metadata.full_name,
-					avatar: session.user.user_metadata.avatar_url,
-					createdAt: new Date().toISOString(),
-				},
-
-				userTeam: null,
 			};
-			await authApi.googleLogin(payload); // API call
+			const res = await authApi.googleLogin(payload);
+			const authData = res as AuthResponse;
 
-			dispatch(loginSuccess(payload));
+			dispatch(
+				loginSuccess({
+					user: authData.data?.user ?? null,
+					session: authData.data?.session ?? undefined,
+					userTeam: authData.userTeam,
+					userProject: authData.userProject,
+				}),
+			);
 
-			return { data: payload, error: undefined };
+			return { data: res, error: undefined };
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Login failed";
 			dispatch(loginFailure(message));
@@ -104,10 +106,32 @@ export const signupUser =
 		try {
 			dispatch(loginStart());
 			const res = await authApi.signup(payload);
-			dispatch(loginSuccess(res)); // reuse loginSuccess (token + user)
-		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : "Login failed";
-			dispatch(loginFailure(message || "Signup failed"));
+			const authData = res as AuthResponse;
+
+			dispatch(
+				loginSuccess({
+					user: authData.data?.user ?? null,
+					session: authData.data?.session ?? undefined,
+					userTeam: authData.userTeam,
+					userProject: authData.userProject,
+				}),
+			);
+			return {
+				data: res,
+				error: undefined,
+			};
+		} catch (err: any) {
+			const message =
+				err?.response?.data?.error ||
+				err?.message ||
+				"Signup failed";
+
+			dispatch(loginFailure(message));
+
+			return {
+				data: undefined,
+				error: message,
+			};
 		}
 	};
 export const googleSignupUser =
@@ -122,26 +146,34 @@ export const googleSignupUser =
 			};
 		};
 	}) =>
-	async (dispatch: AppDispatch) => {
-		try {
-			dispatch(loginStart());
+		async (dispatch: AppDispatch) => {
+			try {
+				dispatch(loginStart());
 
-			const payload = {
-				email: session.user.email,
-				name: session.user.user_metadata.full_name,
-				picture: session.user.user_metadata.avatar_url,
-				supabaseId: session.user.id,
-			};
+				const payload = {
+					email: session.user.email,
+					name: session.user.user_metadata.full_name,
+					picture: session.user.user_metadata.avatar_url,
+					supabaseId: session.user.id,
+				};
 
-			const res = await authApi.googleSignup(payload);
+				const res = await authApi.googleSignup(payload);
+				const authData = res as AuthResponse;
 
-			dispatch(loginSuccess(res));
-		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : "Login failed";
+				dispatch(
+					loginSuccess({
+						user: authData.data?.user ?? null,
+						session: authData.data?.session ?? undefined,
+						userTeam: authData.userTeam,
+						userProject: authData.userProject,
+					}),
+				);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : "Login failed";
 
-			dispatch(loginFailure(message));
-		}
-	};
+				dispatch(loginFailure(message));
+			}
+		};
 
 // utils/cookies.ts
 export function getCookie(name: string): string | null {

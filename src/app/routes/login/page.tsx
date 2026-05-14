@@ -5,7 +5,6 @@ import { loginUser } from "@/features/auth/api/auth";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { useAppDispatch } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import type { ApiResponse } from "@/types/api";
 import type { AuthResponse } from "@/types/auth";
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -21,7 +20,7 @@ export default function LoginPage() {
     remember?: boolean;
   }): Promise<
     | {
-      data: ApiResponse<AuthResponse>;
+      data: AuthResponse;
       error: undefined;
     }
     | {
@@ -30,13 +29,10 @@ export default function LoginPage() {
     }
   > {
     const response = await dispatch(loginUser(userData));
-
     return response;
   }
 
   const handleGoogleLogin = async () => {
-    console.log('import.meta.env.VITE_BASE_PATHimport.meta.env.VITE_BASE_PATH', `${window.location.origin}${import.meta.env.VITE_BASE_PATH}/callback`)
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
 

@@ -1,5 +1,10 @@
+import type { AuthResponse as SupabaseAuthResponse, User } from "@supabase/supabase-js";
 import type { Project, Team, ViewMode } from "./type";
-import type { User } from "./user";
+
+export type AuthResponse = SupabaseAuthResponse & {
+	userTeam?: Team | null;
+	userProject?: Project | null;
+};
 
 export interface AuthState {
 	user: User | null;
@@ -29,11 +34,4 @@ export interface SignupPayload {
 	email: string;
 	username: string;
 	password: string;
-}
-
-export interface AuthResponse {
-	token: string;
-	user: User;
-	refreshToken: string;
-	company: unknown;
 }

@@ -1,3 +1,4 @@
+import type { AuthState } from "@/types/auth";
 import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useContext, useMemo, useState } from "react";
@@ -51,7 +52,7 @@ export default function AddTaskForm({
 	type?: string;
 	status?: SelectedColumn | undefined;
 }) {
-	const auth = useAppSelector((s) => s.auth);
+	const auth = useAppSelector((s: { auth: AuthState }) => s.auth);
 
 	const [loading, setLoading] = useState(false);
 	const {
@@ -405,7 +406,7 @@ export default function AddTaskForm({
 
 					<Field>
 						<FieldLabel>Assigned By</FieldLabel>
-						<p>{auth?.user?.name}</p>
+						<p>{(auth?.user as { user_metadata?: { full_name?: string } } | null)?.user_metadata?.full_name ?? auth?.user?.email}</p>
 					</Field>
 				</div>
 				<div className="flex flex-row w-[100%] justify-end">

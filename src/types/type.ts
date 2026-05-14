@@ -204,15 +204,8 @@ export interface Activity {
 }
 
 /* ---------------------------
-   Convenience: Auth slice / UI-related types
-   (based on your usage in ProtectedRoutes)
+   Convenience: Sidebar / UI-related types
    --------------------------- */
-
-export interface AuthState {
-	userProject: Project | undefined;
-	userTeam: Team | undefined;
-	// you can extend this with user, token, etc.
-}
 
 export interface SidebarContextValue {
 	setTaskForTableState: React.Dispatch<React.SetStateAction<Task[]>>;

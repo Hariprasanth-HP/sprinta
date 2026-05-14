@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { ApiResponse } from "@/types/api";
 import type { AuthResponse } from "@/types/auth";
+import { toast } from "sonner";
 
 type Props = React.ComponentPropsWithoutRef<"div"> & {
 	error: string;
@@ -23,13 +23,13 @@ type Props = React.ComponentPropsWithoutRef<"div"> & {
 		remember?: boolean;
 	}) => Promise<
 		| {
-				data: ApiResponse<AuthResponse>;
-				error: undefined;
-		  }
+			data: AuthResponse;
+			error: undefined;
+		}
 		| {
-				error: unknown;
-				data?: undefined;
-		  }
+			error: unknown;
+			data?: undefined;
+		}
 	>;
 	handleGoogleLogin?: () => void;
 	className?: string;
@@ -105,18 +105,18 @@ export function LoginForm({
 					setFormData((prev) => ({ ...prev, password: "" })); // keep email
 					handleNavigate?.();
 				}
+				else {
+					let errorRes: string = "";
+					if (error instanceof Error) {
+						const message = error.message;
+						errorRes = message;
+					} else {
+						errorRes = String(error);
+					}
+					setError(errorRes);
+					toast.error(errorRes)
+				}
 			}
-		} catch (err) {
-			let errorRes: string = "";
-			if (err instanceof Error) {
-				const message = err.message;
-				console.log(message);
-				errorRes = message;
-			} else {
-				console.log("Unknown error", err);
-				errorRes = String(err);
-			}
-			setError(errorRes);
 		} finally {
 			setLoading(false);
 		}

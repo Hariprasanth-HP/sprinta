@@ -10,11 +10,15 @@ export default function SignupPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   async function signup(userData: SignupPayload) {
-    await dispatch(signupUser(userData));
+    const res = await dispatch(signupUser(userData));
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    await toast.success("Signup successful");
     await navigate("/");
   }
   const handleGoogleSignup = async () => {
-    console.log('import.meta.env.VITE_BASE_PATHimport.meta.env.VITE_BASE_PATH', `${window.location.origin}${import.meta.env.VITE_BASE_PATH}callback`)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

@@ -193,13 +193,13 @@ export default function AddTaskForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="space-y-4 bg-card p-6 rounded-md text-card-foreground overflow-auto"
+			className="space-y-4 bg-card p-4 sm:p-6 rounded-md text-card-foreground overflow-auto max-h-[90vh] touch-manipulation"
 		>
 			<FieldGroup>
 				<div className="space-y-4">
 					<Label>Task Details</Label>
 
-					<div className="flex gap-2">
+					<div className="flex flex-col sm:flex-row gap-2">
 						<Input
 							id="task-generative-overview"
 							placeholder="Give your task details"
@@ -255,7 +255,7 @@ export default function AddTaskForm({
 						required
 					/>
 				</Field>
-				<div className="grid grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 					{/* Project */}
 					<Field>
 						<FieldLabel htmlFor="project">Project *</FieldLabel>
@@ -341,7 +341,7 @@ export default function AddTaskForm({
 						</Select>
 					</Field>
 				</div>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<Field>
 						<FieldLabel htmlFor="due-date">Due date</FieldLabel>
 						<Input
@@ -377,7 +377,7 @@ export default function AddTaskForm({
 						</Select>
 					</Field>
 				</div>
-				<div className="grid grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<Field>
 						<FieldLabel>Assignee</FieldLabel>
 						<Select

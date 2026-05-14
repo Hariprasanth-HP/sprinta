@@ -395,9 +395,9 @@ export function DrawerInfo({
 				</Drawer>
 			) : (
 				<Drawer open={open} dismissible={true} onOpenChange={setOpen}>
-					<DrawerContent className="!h-[95vh] !max-h-[95vh] !flex">
-						<div className=" !flex h-[100%]">
-							<div className="mx-auto w-[60%]  p-6">
+					<DrawerContent className="!h-[95vh] !max-h-[95vh] !flex flex-col">
+						<div className="!flex h-[100%] flex-col md:flex-row overflow-hidden">
+							<div className="mx-auto w-full md:w-[60%] p-4 sm:p-6 overflow-y-auto touch-manipulation">
 								<DrawerHeader>
 									<div className="flex items-start justify-between gap-4 w-full">
 										<div>
@@ -445,7 +445,7 @@ export function DrawerInfo({
 												variant="ghost"
 												title="Delete Task"
 												onClick={() => setShowTaskDelete(true)}
-												className="text-destructive p-0 h-20 w-20 rounded-full"
+												className="text-destructive p-0 h-8 w-8 rounded-full"
 											>
 												<Trash2
 													style={{
@@ -475,7 +475,7 @@ export function DrawerInfo({
 										</div>
 									</section>
 
-									<div className="grid grid-cols-2 gap-4">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 										<div>
 											<Label>Status</Label>
 											<div
@@ -669,7 +669,7 @@ export function DrawerInfo({
 									</div>
 								</DrawerFooter>
 							</div>
-							<div className="mx-auto w-[40%] p-6">
+							<div className="mx-auto w-full md:w-[40%] p-4 sm:p-6 border-t md:border-t-0 md:border-l border-border overflow-y-auto touch-manipulation">
 								<ActivityComp
 									activities={activities}
 									setActivities={setActivities}

@@ -87,10 +87,10 @@ export const googleLoginUser =
 
 			dispatch(
 				loginSuccess({
-					user: authData.data?.user ?? null,
-					session: authData.data?.session ?? undefined,
-					userTeam: authData.userTeam,
-					userProject: authData.userProject,
+					user: authData ?? null,
+					session: session ?? undefined,
+					userTeam: authData?.userTeam,
+					userProject: authData?.userProject,
 				}),
 			);
 
@@ -163,9 +163,9 @@ export const googleSignupUser =
 				dispatch(
 					loginSuccess({
 						user: authData.data?.user ?? null,
-						session: authData.data?.session ?? undefined,
-						userTeam: authData.userTeam,
-						userProject: authData.userProject,
+						session: session ?? undefined,
+						userTeam: authData?.userTeam,
+						userProject: authData?.userProject,
 					}),
 				);
 			} catch (err: unknown) {

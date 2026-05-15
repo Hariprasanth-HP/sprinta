@@ -18,6 +18,7 @@ import { useUpdatetask } from "@/features/projects/api/task";
 import { AddTaskDialog } from "@/features/projects/components/add-task-form";
 import CreateStatusForm from "@/features/projects/components/create-status-form";
 import type { Priority, Task, TaskStatus } from "@/types/type";
+import { useAppSelector } from "@/hooks/useAuth";
 
 export type User = {
 	id: number;
@@ -104,7 +105,6 @@ type LocalTask = Omit<Task, "id" | "statusId"> & {
  * KanbanFromData - uses provided statuses & tasks (no faker)
  */
 export default function KanbanFromData({
-	statuses,
 	tasks,
 	onChange,
 	setTask,
@@ -125,6 +125,10 @@ export default function KanbanFromData({
 			} as LocalTask;
 		}),
 	);
+	const auth = useAppSelector((s) => s.auth);
+
+	const statuses = auth.statuses;
+
 
 	// sync when parent provides new tasks
 	// -- in your useEffect (normalize incoming tasks)

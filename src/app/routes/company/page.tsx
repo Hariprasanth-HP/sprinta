@@ -30,7 +30,7 @@ export default function TeamPage() {
 		await dispatch(setTeam({ userTeam: selectedTeam }));
 		setTimeout(() => {
 			navigate(`/team/${selectedTeam.id}`);
-		}, 3000);
+		}, 1000);
 	}
 
 	useEffect(() => {
@@ -48,11 +48,11 @@ export default function TeamPage() {
 				setNewTeam(false);
 				setTimeout(() => {
 					setLoading(false);
-				}, 3000);
+				}, 1000);
 			} else {
 				setTimeout(() => {
 					setLoading(false);
-				}, 3000);
+				}, 1000);
 			}
 		}
 		fetchUserTeamsData();

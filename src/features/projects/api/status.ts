@@ -2,6 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/apiClient";
 import type { TaskStatus } from "@/types/type";
+import { setStatus, setStatuses } from "@/features/auth/stores/authSlice";
 
 /**
  * NOTE: apiPost/apiPatch/apiDelete/apiGet are assumed to:
@@ -67,6 +68,7 @@ const statusKeys = {
 
 /** Fetch statuses for a project */
 export function useStatuses(
+	dispatch: (action: { type: string; payload?: unknown }) => void,
 	projectId?: number | string,
 	options?: { enabled?: boolean },
 ) {
@@ -74,7 +76,9 @@ export function useStatuses(
 		queryKey: statusKeys.byProject(projectId ?? "unknown"),
 		queryFn: async () => {
 			if (!projectId) throw new Error("No projectId provided");
-			return getStatusFromProjectApi(Number(projectId));
+			const statuses = await getStatusFromProjectApi(Number(projectId))
+			dispatch(setStatuses({ statuses: statuses }))
+			return statuses;
 		},
 		enabled: !!projectId && (options?.enabled ?? true),
 		staleTime: 1000 * 60 * 2, // 2 minutes default
@@ -102,12 +106,16 @@ export function useStatus(statusId?: number | string) {
  * Create a status and invalidate the project's status list.
  * Optionally accepts react-query mutation options via the returned object .mutateAsync / .mutate
  */
-export function useCreateStatus(projectId?: number) {
+export function useCreateStatus(
+	dispatch: (action: { type: string; payload?: unknown }) => void,
+	projectId?: number) {
 	return useMutation({
-		mutationFn: (payload: Partial<TaskStatus>) => {
+		mutationFn: async (payload: Partial<TaskStatus>) => {
 			if (!projectId)
 				throw new Error("projectId is required for creating a status");
-			return createStatusApi({ projectId, ...payload });
+			const newStatus = await createStatusApi({ projectId, ...payload })
+			dispatch(setStatus({ status: newStatus }))
+			return newStatus;
 		},
 	});
 }

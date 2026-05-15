@@ -50,6 +50,7 @@ export default function CreateListForm({
 		setError(null);
 		return true;
 	};
+	console.log("auth", auth);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();

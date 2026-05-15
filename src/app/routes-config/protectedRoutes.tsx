@@ -55,8 +55,8 @@ export default function ProtectedRoutes(): JSX.Element {
 		[projectsQuery.data],
 	);
 	const projectsLoading = projectsQuery.isLoading ?? false;
-
 	const statusesQuery = useStatuses(
+		dispatch,
 		auth.userProject?.id ?? selectedProject?.id,
 	);
 	const statuses = statusesQuery.data;
@@ -94,11 +94,31 @@ export default function ProtectedRoutes(): JSX.Element {
 
 	// ---- Sync server projects into local projectsState ----
 	useEffect(() => {
-		if (projects && projects.length > 0) {
-			setProjectsState(projects);
-		} else {
-			setProjectsState([]);
+
+		async function setProjects() {
+			if (projects && projects.length > 0) {
+				const currentProjectStr = localStorage.getItem("project")
+				if (currentProjectStr) {
+					const currentProject = JSON.parse(currentProjectStr) as Project;
+					if (currentProject.teamId !== auth.userTeam?.id) {
+						localStorage.removeItem("project");
+					}
+					else {
+						setSelectedProject(currentProject);
+						await dispatch(setProject({ userProject: currentProject }));
+					}
+				}
+				else {
+					setSelectedProject(projects?.[0]);
+					await dispatch(setProject({ userProject: projects?.[0] }));
+				}
+
+				setProjectsState(projects);
+			} else {
+				setProjectsState([]);
+			}
 		}
+		setProjects()
 	}, [projects]);
 
 	// ---- On mount: fetch team details and members (if auth.userTeam exists) ----

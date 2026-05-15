@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState } from "@/types/auth";
-import { ViewMode } from "@/types/type";
+import { ViewMode, type TaskStatus } from "@/types/type";
 import type { User } from "@supabase/supabase-js";
 
 const initialState: AuthState = {
@@ -8,6 +8,7 @@ const initialState: AuthState = {
 	token: localStorage.getItem("access_token"),
 	isAuthenticated: !!localStorage.getItem("access_token"),
 	status: "idle",
+	statuses: [],
 	error: null,
 	userTeam: JSON.parse(localStorage.getItem("team") || "null"),
 	userProject: JSON.parse(localStorage.getItem("project") || "null"),
@@ -52,27 +53,58 @@ const authSlice = createSlice({
 		},
 		loginSuccess(state, action: PayloadAction<LoginSuccessPayload>) {
 			state.status = "succeeded";
-			
+
 
 			const user = (action.payload.user ?? null) as AuthState["user"];
 			state.user = user;
 			const token = action.payload.session?.access_token ?? null;
 			state.token = token;
 			state.isAuthenticated = true;
-			state.userTeam = (action.payload.userTeam ?? null) as AuthState["userTeam"];
-			state.userProject = (action.payload.userProject ?? null) as AuthState["userProject"];
 			if (token) localStorage.setItem("access_token", token);
 			if (user) localStorage.setItem("user", JSON.stringify(user));
 
-			if (action.payload.refreshToken)
-				document.cookie = `refreshToken=${action.payload.refreshToken}; Path=/; Max-Age=${60 * 60 * 24 * 7}`;
+			if (action.payload.session?.access_token)
+				document.cookie = `refreshToken=${action.payload.session?.access_token}; Path=/; Max-Age=${60 * 60 * 24 * 7}`;
 		},
 		setTeam(state, action: PayloadAction<{ userTeam?: AuthState["userTeam"] }>) {
 			const team = action.payload.userTeam;
 			state.userTeam = team ?? null;
 			state.userProject = null;
 			localStorage.setItem("team", JSON.stringify(team));
-			localStorage.removeItem("project");
+		},
+		setStatuses(state, action: PayloadAction<{ statuses?: TaskStatus[] }>) {
+			const statuses = action.payload.statuses;
+			console.log('a');
+
+			state.statuses = statuses ?? [];
+		},
+
+		setStatus(state, action: PayloadAction<{ status?: TaskStatus }>) {
+			const status = action.payload.status;
+
+			if (!status) return;
+
+			state.statuses = [...(state.statuses ?? []), status];
+		},
+
+		updateStatus(state, action: PayloadAction<{ status?: TaskStatus }>) {
+			const updatedStatus = action.payload.status;
+
+			if (!updatedStatus || !state.statuses) return;
+
+			state.statuses = state.statuses.map((status) =>
+				status.id === updatedStatus.id ? updatedStatus : status,
+			);
+		},
+
+		deleteStatus(state, action: PayloadAction<{ statusId?: number }>) {
+			const statusId = action.payload.statusId;
+
+			if (statusId === undefined || !state.statuses) return;
+
+			state.statuses = state.statuses.filter(
+				(status) => status.id !== statusId,
+			);
 		},
 		setProject(
 			state,
@@ -118,6 +150,8 @@ export const {
 	setAuth,
 	setTeam,
 	setProject,
+	setStatuses,
+	setStatus,
 	clearTeamAndProject,
 	setViewMode,
 } = authSlice.actions;

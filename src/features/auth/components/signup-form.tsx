@@ -93,9 +93,13 @@ export function SignupForm({
 
 		const newErrors = validate();
 		setErrors(newErrors);
-
-		if (Object.keys(newErrors).length > 0) return;
-
+		if (Object.keys(newErrors).length > 0) {
+			Object.keys(newErrors).forEach((key) => {
+				if (newErrors[key as keyof typeof newErrors] !== '') {
+					return
+				}
+			});
+		}
 		setSubmitting(true);
 
 		const fd = new FormData();
@@ -245,7 +249,7 @@ export function SignupForm({
 								</Button>
 							</Field>
 							<FieldDescription className="text-center">
-								Already have an account? <a href="#">Sign in</a>
+								Already have an account? <a href="/login">Sign in</a>
 							</FieldDescription>
 						</FieldGroup>
 					</form>

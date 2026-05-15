@@ -36,6 +36,7 @@ import {
 } from "@/features/projects/api/task";
 import type { Activity, Task, TaskStatus } from "@/types/type";
 import ActivityComp from "./activity-section";
+import { useAppSelector } from "@/hooks/useAuth";
 
 /**
  * Props notes:
@@ -77,7 +78,6 @@ export function DrawerInfo({
 	onSubTaskClick,
 	setTask,
 	setTaskForTableState,
-	statuses = [],
 	setShowTaskDelete,
 	createTask,
 	...rest
@@ -87,7 +87,9 @@ export function DrawerInfo({
 	const [subTaskDesc, setSubTaskDesc] = useState<string>("");
 	const [activities, setActivities] = useState<Activity[]>([]);
 	const fetchActivities = useFetchactivitiesFromTask();
+	const auth = useAppSelector((s) => s.auth);
 
+	const statuses = auth.statuses;
 	useEffect(() => {
 		async function fetchActivitiesFromTask() {
 			const { data } = await fetchActivities.mutateAsync({
@@ -96,7 +98,7 @@ export function DrawerInfo({
 			if (data) {
 				setActivities(data.reverse() as Activity[]);
 			}
-			
+
 		}
 		fetchActivitiesFromTask();
 
@@ -300,7 +302,7 @@ export function DrawerInfo({
 					<SelectValue placeholder="Select status" />
 				</SelectTrigger>
 				<SelectContent>
-					{statuses.map((l) => (
+					{statuses?.map((l) => (
 						<SelectItem key={l.id} value={String(l.id)}>
 							{l.name}
 						</SelectItem>
@@ -360,7 +362,7 @@ export function DrawerInfo({
 			/>
 		);
 	};
-	
+
 
 	const status = statuses?.find(
 		(statusItem) => statusItem.id === Number(localTask?.statusId),
@@ -576,7 +578,7 @@ export function DrawerInfo({
 														placeholder="Add a subtask"
 														onChange={(e) => setSubTaskDesc(e.target.value)}
 														value={subTaskDesc}
-														// controlled externally in original component — consumer can wire this in
+													// controlled externally in original component — consumer can wire this in
 													/>
 													<Button
 														className="h-9"
@@ -632,7 +634,7 @@ export function DrawerInfo({
 																	toast.error(
 																		(error instanceof Error &&
 																			error?.message) ||
-																			"Failed to create sub-task",
+																		"Failed to create sub-task",
 																	);
 																}
 															}
@@ -676,7 +678,7 @@ export function DrawerInfo({
 									{...rest}
 									userId={rest.userId!}
 									taskId={Number(task.id)}
-									// activities props remain controlled by consumer
+								// activities props remain controlled by consumer
 								/>
 							</div>
 						</div>
@@ -693,7 +695,7 @@ export function DrawerInfo({
 					taskId={rest.subTask?.id}
 					setTaskForTableState={setTaskForTableState}
 					parentId={rest.subTask?.parentTaskId}
-					statuses={statuses}
+					statuses={statuses ?? undefined}
 					setShowTaskDelete={setShowTaskDelete}
 					createTask={createTask}
 				/>

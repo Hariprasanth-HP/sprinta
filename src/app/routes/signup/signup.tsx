@@ -11,6 +11,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
   async function signup(userData: SignupPayload) {
     const res = await dispatch(signupUser(userData));
+
     if (res.error) {
       toast.error(res.error);
       return;

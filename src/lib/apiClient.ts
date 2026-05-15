@@ -2,6 +2,7 @@
 
 import { setAuth } from "@/features/auth/stores/authSlice";
 import { store } from "../store";
+import { supabase } from "./supabase";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
@@ -18,36 +19,44 @@ async function refreshAccessToken(): Promise<boolean> {
 
 	refreshingPromise = (async () => {
 		try {
-			const res = await fetch(`${API_BASE}/auth/refresh`, {
-				method: "POST",
-				credentials: "include", // IMPORTANT: send HttpOnly cookie
-				headers: { "Content-Type": "application/json" },
-			});
+			const {
+				data: { session },
+				error,
+			} = await supabase.auth.refreshSession();
 
-			if (!res.ok) {
-				// refresh failed (revoked/expired)
-				store.dispatch(setAuth({ token: null, user: null }));
+			if (error || !session) {
+				console.error("Supabase refresh failed:", error);
+
+				store.dispatch(
+					setAuth({
+						token: null,
+						user: null,
+					}),
+				);
+
 				return false;
 			}
 
-			const json = await res.json().catch(() => null);
-			const token = json?.token ?? null;
-			const user = json?.user ?? null;
+			store.dispatch(
+				setAuth({
+					token: session.access_token,
+					user: session.user,
+				}),
+			);
 
-			if (token) {
-				store.dispatch(setAuth({ token, user }));
-				return true;
-			} else {
-				// server didn't return token -> treat as failed
-				store.dispatch(setAuth({ token: null, user: null }));
-				return false;
-			}
+			return true;
 		} catch (err) {
 			console.error("refreshAccessToken error", err);
-			store.dispatch(setAuth({ token: null, user: null }));
+
+			store.dispatch(
+				setAuth({
+					token: null,
+					user: null,
+				}),
+			);
+
 			return false;
 		} finally {
-			// clear the refreshing promise so next request can create a new one if needed
 			refreshingPromise = null;
 		}
 	})();

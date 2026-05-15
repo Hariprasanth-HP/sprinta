@@ -1,5 +1,5 @@
 import type { AuthResponse as SupabaseAuthResponse, User } from "@supabase/supabase-js";
-import type { Project, Team, ViewMode } from "./type";
+import type { Project, TaskStatus, Team, ViewMode } from "./type";
 
 export type AuthResponse = SupabaseAuthResponse & {
 	userTeam?: Team | null;
@@ -11,6 +11,7 @@ export interface AuthState {
 	token: string | null;
 	isAuthenticated: boolean;
 	status: "idle" | "loading" | "succeeded" | "failed";
+	statuses: TaskStatus[] | null;
 	error: string | null;
 	userProject: Project | undefined | null;
 	userTeam: Team | undefined | null;

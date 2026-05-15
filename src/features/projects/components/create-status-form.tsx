@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -9,19 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { SideBarContext } from "@/contexts/sidebar-context";
 import {
 	useCreateStatus,
 	useUpdateStatus,
 } from "@/features/projects/api/status";
-import { useAppSelector } from "@/hooks/useAuth";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
 import type { TaskStatus } from "@/types/type";
 import type { SelectedColumn } from "./kanban-view";
 
 export default function CreateStatusForm({
 	openDialog,
 	setOpenDialog,
-	onCancel = () => {},
+	onCancel = () => { },
 	onSuccess,
 	initialData,
 	setColumnData,
@@ -33,10 +32,9 @@ export default function CreateStatusForm({
 	initialData?: SelectedColumn | undefined;
 	setColumnData?: React.Dispatch<React.SetStateAction<TaskStatus[]>>;
 }) {
-	const { statuses } = useContext(SideBarContext)!;
-
 	const auth = useAppSelector((s) => s.auth);
 	const projectId = auth?.userProject?.id;
+	const statuses = auth.statuses;
 	const isEditing = Boolean(initialData);
 	const [formData, setFormData] = useState(
 		initialData ?? {
@@ -50,16 +48,15 @@ export default function CreateStatusForm({
 			setFormData(initialData);
 		}
 	}, [initialData]);
-	console.log("initialDatainitialData", initialData, formData);
 
 	const [open, setOpen] = useState(openDialog);
+	const dispatch = useAppDispatch();
 	useEffect(() => {
 		setOpen(openDialog);
 	}, [openDialog]);
 	const [error, setError] = useState("");
-	const createStatus = useCreateStatus(projectId);
+	const createStatus = useCreateStatus(dispatch, projectId);
 	const updateStatus = useUpdateStatus();
-	console.log("updateStatus", updateStatus);
 
 	// compute next sort order
 	const nextSortOrder = React.useMemo(() => {

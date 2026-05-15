@@ -53,7 +53,7 @@ export default function AddTaskForm({
 	status?: SelectedColumn | undefined;
 }) {
 	const auth = useAppSelector((s: { auth: AuthState }) => s.auth);
-
+	console.log("auth", auth)
 	const [loading, setLoading] = useState(false);
 	const {
 		usersList,
@@ -61,8 +61,10 @@ export default function AddTaskForm({
 		listForTable,
 		setTaskForTableState,
 		selectedProject,
-		statuses = [],
 	} = useContext(SideBarContext)!;
+
+
+	const statuses = auth.statuses;
 	const [listState, setListState] = useState(() => listForTable);
 	const [selectedStatusId] = useState(
 		statuses!.length > 0 ? () => statuses?.[0] : undefined,

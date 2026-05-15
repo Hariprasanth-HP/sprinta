@@ -96,7 +96,7 @@ export function DrawerInfo({
 			if (data) {
 				setActivities(data.reverse() as Activity[]);
 			}
-			console.log("data", data);
+			
 		}
 		fetchActivitiesFromTask();
 
@@ -360,7 +360,7 @@ export function DrawerInfo({
 			/>
 		);
 	};
-	console.log("localTask", localTask);
+	
 
 	const status = statuses?.find(
 		(statusItem) => statusItem.id === Number(localTask?.statusId),

@@ -157,7 +157,6 @@ export default function AddTaskForm({
 				}
 			}
 		} catch (err) {
-			console.error("Submit error", err);
 			toast.error("Failed to create task");
 		} finally {
 			setLoading(false);
@@ -186,7 +185,6 @@ export default function AddTaskForm({
 				};
 			});
 		} catch (err) {
-			console.error("Error generating:", err);
 		}
 	};
 

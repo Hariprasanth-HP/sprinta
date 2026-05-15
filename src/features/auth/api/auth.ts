@@ -87,7 +87,7 @@ export const googleLoginUser =
 
 			dispatch(
 				loginSuccess({
-					user: authData ?? null,
+					user: authData?.data ?? null,
 					session: session ?? undefined,
 					userTeam: authData?.userTeam,
 					userProject: authData?.userProject,

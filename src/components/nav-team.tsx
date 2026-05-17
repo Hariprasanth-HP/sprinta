@@ -39,7 +39,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { clearTeamAndProject } from "@/features/auth/stores/authSlice";
+import { clearTeam } from "@/features/team/stores/teamSlice";
+import { clearProject } from "@/features/project/stores/projectSlice";
 import { useCreateMembers } from "@/features/teams/api/member";
 import { ManageMembers } from "@/features/teams/components/manage-members";
 import { useAppSelector } from "@/hooks/useAuth";
@@ -136,8 +137,8 @@ type RowErrors = {
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 export function ManageTeam() {
-	const auth = useAppSelector((s) => s.auth);
-	const team = auth.userTeam;
+	const currentTeam = useAppSelector((s) => s.team.currentTeam);
+	const team = currentTeam;
 	const [rows, setRows] = useState<Row[]>(() => [
 		{ id: cryptoRandomId(), email: "", name: "", role: "member" },
 		{ id: cryptoRandomId(), email: "", name: "", role: "member" },
@@ -259,7 +260,8 @@ export function ManageTeam() {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	async function handleCreateWorkspace() {
-		await dispatch(clearTeamAndProject());
+		dispatch(clearTeam());
+		dispatch(clearProject());
 		navigate("/team");
 	}
 	return (

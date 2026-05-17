@@ -125,9 +125,7 @@ export default function KanbanFromData({
 			} as LocalTask;
 		}),
 	);
-	const auth = useAppSelector((s) => s.auth);
-
-	const statuses = auth.statuses;
+	const statuses = useAppSelector((s) => s.statuses.statuses);
 
 
 	// sync when parent provides new tasks

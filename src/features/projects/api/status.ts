@@ -2,7 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/apiClient";
 import type { TaskStatus } from "@/types/type";
-import { setStatus, setStatuses } from "@/features/auth/stores/authSlice";
+import { addStatus, setStatuses } from "@/features/project/stores/statusSlice";
 
 /**
  * NOTE: apiPost/apiPatch/apiDelete/apiGet are assumed to:
@@ -77,7 +77,7 @@ export function useStatuses(
 		queryFn: async () => {
 			if (!projectId) throw new Error("No projectId provided");
 			const statuses = await getStatusFromProjectApi(Number(projectId))
-			dispatch(setStatuses({ statuses: statuses }))
+			dispatch(setStatuses(statuses))
 			return statuses;
 		},
 		enabled: !!projectId && (options?.enabled ?? true),
@@ -114,7 +114,7 @@ export function useCreateStatus(
 			if (!projectId)
 				throw new Error("projectId is required for creating a status");
 			const newStatus = await createStatusApi({ projectId, ...payload })
-			dispatch(setStatus({ status: newStatus }))
+			dispatch(addStatus(newStatus!))
 			return newStatus;
 		},
 	});

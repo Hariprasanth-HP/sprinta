@@ -32,9 +32,9 @@ export default function CreateStatusForm({
 	initialData?: SelectedColumn | undefined;
 	setColumnData?: React.Dispatch<React.SetStateAction<TaskStatus[]>>;
 }) {
-	const auth = useAppSelector((s) => s.auth);
-	const projectId = auth?.userProject?.id;
-	const statuses = auth.statuses;
+	const project = useAppSelector((s) => s.project.currentProject);
+	const projectId = project?.id;
+	const statuses = useAppSelector((s) => s.statuses.statuses);
 	const isEditing = Boolean(initialData);
 	const [formData, setFormData] = useState(
 		initialData ?? {

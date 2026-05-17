@@ -2,7 +2,7 @@ import { GalleryVerticalEnd, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setTeam } from "@/features/auth/stores/authSlice";
+import { setTeam } from "@/features/team/stores/teamSlice";
 import { useCreateteam, useFetchUserteams } from "@/features/teams/api/team";
 import { CompanyForm } from "@/features/teams/components/company-form";
 import { useAppSelector } from "@/hooks/useAuth";
@@ -23,11 +23,11 @@ export default function TeamPage() {
 			name: teamName,
 			creatorId: auth.user?.id,
 		});
-		await dispatch(setTeam({ userTeam: data }));
+		await dispatch(setTeam(data));
 		await navigate(`/team/${data.id}`);
 	}
 	async function handleSelectTeam(selectedTeam: Team) {
-		await dispatch(setTeam({ userTeam: selectedTeam }));
+		await dispatch(setTeam(selectedTeam));
 		setTimeout(() => {
 			navigate(`/team/${selectedTeam.id}`);
 		}, 1000);

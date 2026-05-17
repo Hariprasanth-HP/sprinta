@@ -59,8 +59,6 @@ export const loginUser =
 				loginSuccess({
 					user: authData.data?.user ?? null,
 					session: authData.data?.session ?? undefined,
-					userTeam: authData.userTeam,
-					userProject: authData.userProject,
 				}),
 			);
 			return { data: res, error: undefined };
@@ -89,8 +87,6 @@ export const googleLoginUser =
 				loginSuccess({
 					user: authData?.data ?? null,
 					session: session ?? undefined,
-					userTeam: authData?.userTeam,
-					userProject: authData?.userProject,
 				}),
 			);
 
@@ -112,8 +108,6 @@ export const signupUser =
 				loginSuccess({
 					user: authData.data?.user ?? null,
 					session: authData.data?.session ?? undefined,
-					userTeam: authData.userTeam,
-					userProject: authData.userProject,
 				}),
 			);
 			return {
@@ -164,8 +158,6 @@ export const googleSignupUser =
 					loginSuccess({
 						user: authData.data?.user ?? null,
 						session: session ?? undefined,
-						userTeam: authData?.userTeam,
-						userProject: authData?.userProject,
 					}),
 				);
 			} catch (err: unknown) {
@@ -184,22 +176,17 @@ export function getCookie(name: string): string | null {
 
 export const logoutUser = () => async (dispatch: AppDispatch) => {
 	try {
-		// ✅ Get refresh token from cookie
 		const refreshToken = getCookie("refreshToken");
 		if (!refreshToken) {
-			console.warn("No refresh token found in cookies");
 			dispatch(loginFailure("Logout failed , No refresh Token"));
 			return;
 		}
 
-		// ✅ Clear local state
-		dispatch(logout()); // this should reset your Redux state (user, token, etc.)
+		dispatch(logout());
 
-		// ✅ Clear the cookie client-side
 		document.cookie = "refreshToken=; Path=/; Max-Age=0;";
 	} catch (err: unknown) {
-		console.error("Logout error:", err);
-		const message = err instanceof Error ? err.message : "Login failed";
+		const message = err instanceof Error ? err.message : "Logout failed";
 		dispatch(loginFailure(message || "Logout failed"));
 	}
 };

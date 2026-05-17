@@ -10,7 +10,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { setProject, setViewMode } from "@/features/auth/stores/authSlice";
+import { setViewMode } from "@/features/auth/stores/authSlice";
+import { setProject } from "@/features/project/stores/projectSlice";
 import { ProjectDialog } from "@/features/projects/components/project-form";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
 import { type Project, ViewMode, ViewModeLabel } from "@/types/type";
@@ -24,14 +25,15 @@ export function SiteHeader({
 	logout: () => void;
 	projects: Project[];
 }) {
-	const auth = useAppSelector((s) => s.auth);
+	const viewMode = useAppSelector((s) => s.auth.viewMode);
+	const currentProject = useAppSelector((s) => s.project.currentProject);
 	const {
 		handleCreateProject,
 		refetchProject,
 		selectedProject: selectedProjectContext,
 	} = React.useContext(SideBarContext)!;
 	const [mode, setMode] = React.useState<ViewMode>(
-		auth.viewMode ?? ViewMode.LIST,
+		viewMode ?? ViewMode.LIST,
 	);
 
 	const [selectedProject, setSelectedProject] = React.useState<
@@ -48,17 +50,17 @@ export function SiteHeader({
 		const foundProject = projects.find((p) => Number(p.id) === id);
 		if (foundProject) {
 			setSelectedProject(foundProject);
-			dispatch(setProject({ userProject: foundProject }));
+			dispatch(setProject(foundProject));
 		}
 	};
 
 	React.useEffect(() => {
-		if (auth.userProject) {
-			setSelectedProject(auth.userProject);
+		if (currentProject) {
+			setSelectedProject(currentProject);
 		} else {
 			setSelectedProject(selectedProjectContext);
 		}
-	}, [auth.userProject, selectedProjectContext]);
+	}, [currentProject, selectedProjectContext]);
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
 			<div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">

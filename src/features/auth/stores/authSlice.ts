@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState } from "@/types/auth";
-import { ViewMode, type TaskStatus } from "@/types/type";
+import { ViewMode } from "@/types/type";
 import type { User } from "@supabase/supabase-js";
 
 const initialState: AuthState = {
@@ -8,10 +8,7 @@ const initialState: AuthState = {
 	token: localStorage.getItem("access_token"),
 	isAuthenticated: !!localStorage.getItem("access_token"),
 	status: "idle",
-	statuses: [],
 	error: null,
-	userTeam: JSON.parse(localStorage.getItem("team") || "null"),
-	userProject: JSON.parse(localStorage.getItem("project") || "null"),
 	viewMode: localStorage.getItem("view")
 		? JSON.parse(localStorage.getItem("view")! ?? null)
 		: ViewMode.LIST,
@@ -25,8 +22,6 @@ interface SetAuthPayload {
 interface LoginSuccessPayload {
 	user?: unknown;
 	session?: { access_token?: string };
-	userTeam?: AuthState["userTeam"];
-	userProject?: AuthState["userProject"];
 	refreshToken?: string;
 }
 
@@ -53,9 +48,7 @@ const authSlice = createSlice({
 		},
 		loginSuccess(state, action: PayloadAction<LoginSuccessPayload>) {
 			state.status = "succeeded";
-
-
-			const user = (action.payload.user ?? null) as AuthState["user"];
+			const user = (action.payload.user ?? null) as User | null;
 			state.user = user;
 			const token = action.payload.session?.access_token ?? null;
 			state.token = token;
@@ -66,63 +59,9 @@ const authSlice = createSlice({
 			if (action.payload.session?.access_token)
 				document.cookie = `refreshToken=${action.payload.session?.access_token}; Path=/; Max-Age=${60 * 60 * 24 * 7}`;
 		},
-		setTeam(state, action: PayloadAction<{ userTeam?: AuthState["userTeam"] }>) {
-			const team = action.payload.userTeam;
-			state.userTeam = team ?? null;
-			state.userProject = null;
-			localStorage.setItem("team", JSON.stringify(team));
-		},
-		setStatuses(state, action: PayloadAction<{ statuses?: TaskStatus[] }>) {
-			const statuses = action.payload.statuses;
-			console.log('a');
-
-			state.statuses = statuses ?? [];
-		},
-
-		setStatus(state, action: PayloadAction<{ status?: TaskStatus }>) {
-			const status = action.payload.status;
-
-			if (!status) return;
-
-			state.statuses = [...(state.statuses ?? []), status];
-		},
-
-		updateStatus(state, action: PayloadAction<{ status?: TaskStatus }>) {
-			const updatedStatus = action.payload.status;
-
-			if (!updatedStatus || !state.statuses) return;
-
-			state.statuses = state.statuses.map((status) =>
-				status.id === updatedStatus.id ? updatedStatus : status,
-			);
-		},
-
-		deleteStatus(state, action: PayloadAction<{ statusId?: number }>) {
-			const statusId = action.payload.statusId;
-
-			if (statusId === undefined || !state.statuses) return;
-
-			state.statuses = state.statuses.filter(
-				(status) => status.id !== statusId,
-			);
-		},
-		setProject(
-			state,
-			action: PayloadAction<{ userProject?: AuthState["userProject"] }>,
-		) {
-			const project = action.payload.userProject;
-			state.userProject = project ?? null;
-			localStorage.setItem("project", JSON.stringify(project));
-		},
 		setViewMode(state, action: PayloadAction<ViewMode>) {
 			state.viewMode = action.payload;
 			localStorage.setItem("view", JSON.stringify(action.payload));
-		},
-		clearTeamAndProject(state) {
-			state.userProject = null;
-			state.userTeam = null;
-			localStorage.removeItem("team");
-			localStorage.removeItem("project");
 		},
 		loginFailure(state, action: PayloadAction<string>) {
 			state.status = "failed";
@@ -135,8 +74,6 @@ const authSlice = createSlice({
 			state.status = "idle";
 			state.error = null;
 			localStorage.removeItem("access_token");
-			localStorage.removeItem("team");
-			localStorage.removeItem("project");
 			localStorage.removeItem("user");
 		},
 	},
@@ -148,11 +85,6 @@ export const {
 	loginFailure,
 	logout,
 	setAuth,
-	setTeam,
-	setProject,
-	setStatuses,
-	setStatus,
-	clearTeamAndProject,
 	setViewMode,
 } = authSlice.actions;
 export default authSlice.reducer;

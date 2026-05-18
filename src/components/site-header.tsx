@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
 import { setViewMode } from "@/features/auth/stores/authSlice";
-import { setProject } from "@/features/project/stores/projectSlice";
+import { setProject } from "@/features/auth/stores/projectSlice";
 import { ProjectDialog } from "@/features/projects/components/project-form";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
 import { type Project, ViewMode, ViewModeLabel } from "@/types/type";

@@ -16,7 +16,7 @@ import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
 import { logout } from "@/features/auth/stores/authSlice";
-import { setProject } from "@/features/project/stores/projectSlice";
+import { setProject } from "@/features/auth/stores/projectSlice";
 import { useFetchlistsFromProject } from "@/features/projects/api/list";
 import {
 	type CreateProjectPayload,
@@ -52,7 +52,7 @@ export default function ProtectedRoutes(): JSX.Element {
 	const [selectedProject, setSelectedProject] = useState<Project | undefined>(
 		currentProject ?? undefined,
 	);
-	const projectsQuery = useProjects({ id: currentTeam?.id });
+	const projectsQuery = useProjects({ id: currentTeam?.id, userId: auth.user?.id });
 	const projects: Project[] = useMemo(
 		() => projectsQuery.data ?? [],
 		[projectsQuery.data],
@@ -129,7 +129,7 @@ export default function ProtectedRoutes(): JSX.Element {
 		let mounted = true;
 
 		async function bootTeamAndMembers() {
-if (!currentTeam?.id) return;
+			if (!currentTeam?.id) return;
 
 			try {
 				const { data } = await fetchTeam.mutateAsync({ id: currentTeam.id });

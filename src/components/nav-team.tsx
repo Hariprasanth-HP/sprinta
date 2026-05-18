@@ -39,8 +39,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { clearTeam } from "@/features/team/stores/teamSlice";
-import { clearProject } from "@/features/project/stores/projectSlice";
+import { clearTeam } from "@/features/auth/stores/teamSlice";
+import { clearProject } from "@/features/auth/stores/projectSlice";
 import { useCreateMembers } from "@/features/teams/api/member";
 import { ManageMembers } from "@/features/teams/components/manage-members";
 import { useAppSelector } from "@/hooks/useAuth";
@@ -134,21 +134,27 @@ type RowErrors = {
 	email?: string;
 	role?: string;
 };
-
+export enum TeamRole {
+	OWNER = "OWNER",
+	ADMIN = "ADMIN",
+	MEMBER = "MEMBER",
+}
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 export function ManageTeam() {
 	const currentTeam = useAppSelector((s) => s.team.currentTeam);
+	const user = useAppSelector((s) => s.auth.user);
 	const team = currentTeam;
-	const [rows, setRows] = useState<Row[]>(() => [
-		{ id: cryptoRandomId(), email: "", name: "", role: "member" },
-		{ id: cryptoRandomId(), email: "", name: "", role: "member" },
-		{ id: cryptoRandomId(), email: "", name: "", role: "member" },
-	]);
 
+	const [rows, setRows] = useState<Row[]>(() => [
+		{ id: cryptoRandomId(), email: "", name: "", role: TeamRole.MEMBER },
+		{ id: cryptoRandomId(), email: "", name: "", role: TeamRole.MEMBER },
+		{ id: cryptoRandomId(), email: "", name: "", role: TeamRole.MEMBER },
+	]);
 	const [errors, setErrors] = useState<Record<string, RowErrors>>({});
 	const [globalError, setGlobalError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [successMsg, setSuccessMsg] = useState<string | null>(null);
+	const TEAM_ROLE_OPTIONS = Object.values(TeamRole);
 
 	function cryptoRandomId() {
 		// small helper for unique ids (works in modern browsers)
@@ -229,6 +235,7 @@ export function ManageTeam() {
 			const { data = undefined, added = 0 } = await createmembers.mutateAsync({
 				members: membersPayload,
 				teamId: Number(team?.id),
+				userId: user?.id!,
 			});
 
 			if (!data) {
@@ -238,8 +245,7 @@ export function ManageTeam() {
 			}
 
 			setSuccessMsg(
-				`Added ${
-					Array.isArray(added) ? added : membersPayload.length
+				`Added ${Array.isArray(added) ? added : membersPayload.length
 				} member(s).`,
 			);
 			setRows(() => [
@@ -257,6 +263,7 @@ export function ManageTeam() {
 			setLoading(false);
 		}
 	}
+
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	async function handleCreateWorkspace() {
@@ -264,6 +271,7 @@ export function ManageTeam() {
 		dispatch(clearProject());
 		navigate("/team");
 	}
+
 	return (
 		<>
 			<div className="flex h-full ">
@@ -276,7 +284,7 @@ export function ManageTeam() {
 									Add Members
 								</TabsTrigger>
 								<TabsTrigger value="members" className="text-sm">
-									Manage Members (1)
+									Manage Members
 								</TabsTrigger>
 							</TabsList>
 							<TabsContent value="add">
@@ -337,7 +345,10 @@ export function ManageTeam() {
 												{rows.map((r) => (
 													<div key={`role-${r.id}`}>
 														<Select
-														// simple uncontrolled Select - we manage value via change handler
+															// simple uncontrolled Select - we manage value via change handler
+															onValueChange={(value) =>
+																updateRow(r.id, { role: value })
+															}
 														>
 															<SelectTrigger
 																className="w-full"
@@ -345,39 +356,17 @@ export function ManageTeam() {
 															>
 																<SelectValue placeholder={r.role} />
 															</SelectTrigger>
+
 															<SelectContent>
-																<SelectItem
-																	value="owner"
-																	onClick={() =>
-																		updateRow(r.id, { role: "owner" })
-																	}
-																>
-																	Owner
-																</SelectItem>
-																<SelectItem
-																	value="admin"
-																	onClick={() =>
-																		updateRow(r.id, { role: "admin" })
-																	}
-																>
-																	Admin
-																</SelectItem>
-																<SelectItem
-																	value="member"
-																	onClick={() =>
-																		updateRow(r.id, { role: "member" })
-																	}
-																>
-																	Member
-																</SelectItem>
-																<SelectItem
-																	value="guest"
-																	onClick={() =>
-																		updateRow(r.id, { role: "guest" })
-																	}
-																>
-																	Guest
-																</SelectItem>
+																{TEAM_ROLE_OPTIONS.map((role) => (
+																	<SelectItem
+																		key={role}
+																		value={role}
+
+																	>
+																		{role.charAt(0) + role.slice(1).toLowerCase()}
+																	</SelectItem>
+																))}
 															</SelectContent>
 														</Select>
 														{errors[r.id]?.role && (

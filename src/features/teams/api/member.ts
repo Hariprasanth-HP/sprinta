@@ -15,14 +15,14 @@ export async function createMembersApi(payload: CreateMembersPayload) {
 	// expects: { success: boolean; data: Member[] } OR adjust if API returns different shape
 	return apiPost<MembersRes>(`/member/${payload.teamId}`, {
 		members: payload.members,
-		// creatorId: payload.creatorId,
+		userId: payload.userId,
 	});
 }
 
 export async function updateMemberApi(payload: {
 	memberId: number;
 	name?: string;
-	about?: string;
+	role?: string;
 }) {
 	return apiPatch<MemberRes>(`/member/${payload.memberId}`, payload);
 }
@@ -92,6 +92,7 @@ export function useFetchUserMembers() {
 	});
 }
 type CreateMembersPayload = {
+	userId: string;
 	teamId: number;
 	members: { email: string; name: string | null; role: string }[];
 };
@@ -113,14 +114,13 @@ export function useUpdateMember() {
 	return useMutation<
 		MemberRes,
 		Error,
-		{ memberId: number; name?: string; about?: string }
+		{ memberId: number; name?: string; role?: string }
 	>({
 		mutationFn: (payload) => updateMemberApi(payload),
 		onSuccess: (res) => {
-			// res.data is the updated member; invalidate affected queries
 			if (res?.data?.id != null) {
 				qc.invalidateQueries({ queryKey: ["member", res.data.id] });
-				qc.invalidateQueries({ queryKey: ["members", "team"] }); // if team list should refresh
+				qc.invalidateQueries({ queryKey: ["members", "team"] });
 			}
 		},
 	});

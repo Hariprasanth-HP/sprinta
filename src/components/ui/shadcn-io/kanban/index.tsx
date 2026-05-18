@@ -127,6 +127,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
 		<>
 			<div
 				style={style}
+				className="touch-manipulation"
 				{...listeners}
 				{...attributes}
 				ref={setNodeRef}
@@ -226,13 +227,21 @@ export const KanbanProvider = <
 	const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
 	const sensors = useSensors(
-		useSensor(MouseSensor),
-		useSensor(TouchSensor),
+		useSensor(MouseSensor, {
+			activationConstraint: {
+				distance: 5,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 0,
+				tolerance: 5,
+			},
+		}),
 		useSensor(KeyboardSensor),
 		useSensor(PointerSensor, {
 			activationConstraint: {
-				delay: 100, // delay dragging by 100ms
-				tolerance: 8, // optional: movement allowed before drag cancels
+				distance: 5,
 			},
 		}),
 	);

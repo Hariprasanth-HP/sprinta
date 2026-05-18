@@ -2,7 +2,7 @@ import { GalleryVerticalEnd, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setTeam } from "@/features/team/stores/teamSlice";
+import { setTeam } from "@/features/auth/stores/teamSlice";
 import { useCreateteam, useFetchUserteams } from "@/features/teams/api/team";
 import { CompanyForm } from "@/features/teams/components/company-form";
 import { useAppSelector } from "@/hooks/useAuth";

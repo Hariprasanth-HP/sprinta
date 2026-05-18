@@ -2,7 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/apiClient";
 import type { TaskStatus } from "@/types/type";
-import { addStatus, setStatuses } from "@/features/project/stores/statusSlice";
+import { addStatus, setStatuses } from "@/features/auth/stores/statusSlice";
 
 /**
  * NOTE: apiPost/apiPatch/apiDelete/apiGet are assumed to:

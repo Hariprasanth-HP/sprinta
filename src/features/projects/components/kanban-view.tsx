@@ -114,11 +114,10 @@ export default function KanbanFromData({
 	// Keep a local copy so the Kanban library can mutate / reorder; synchronize when props change.
 	const [localTasks, setLocalTasks] = useState<LocalTask[]>(() =>
 		(tasks ?? []).map((t): LocalTask => {
-			// destructure to avoid spreading original id/statusId which have different types
 			const { id: originalId, statusId: originalStatusId, ...rest } = t as Task;
 			return {
 				...rest,
-				id: `task-${originalId}`, // guaranteed string
+				id: `task-${originalId}`,
 				statusId:
 					originalStatusId == null ? null : `status-${originalStatusId}`,
 				column: originalStatusId == null ? null : `status-${originalStatusId}`,

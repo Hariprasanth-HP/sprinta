@@ -19,7 +19,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { setProject } from "@/features/project/stores/projectSlice";
+import { setProject } from "@/features/auth/stores/projectSlice";
 import { ProjectDeleteDialog } from "@/features/projects/components/project-form";
 import type { Project } from "@/types/type";
 

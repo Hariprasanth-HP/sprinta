@@ -1,25 +1,39 @@
 "use client";
 
 import clsx from "clsx";
-import { Trash2 } from "lucide-react"; // lucide used by shadcn/ui
-
-// TeamMembersList.tsx
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-	useDeleteMember,
-	useFetchMembersForTeam,
-} from "@/features/teams/api/member";
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useDeleteMember, useFetchMembersForTeam, useUpdateMember } from "@/features/teams/api/member";
 import type { TeamMember } from "@/types/type";
 
-export function ManageMembers({ teamId }: { teamId: number }) {
+type ManageMembersProps = {
+	teamId: number;
+};
+
+export function ManageMembers({ teamId }: ManageMembersProps) {
 	const { data = [] } = useFetchMembersForTeam(teamId);
 	return <TeamMembersList key={"members-list"} initialMembers={data} />;
 }
 
 type Props = {
-	initialMembers: TeamMember[];
-	// optional callback if parent wants to react to deletion
+	initialMembers?: TeamMember[];
 	onDeleted?: (memberId: number) => void;
 };
 
@@ -27,28 +41,30 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 	const [members, setMembers] = useState<TeamMember[]>(initialMembers);
 	const [loadingIds, setLoadingIds] = useState<Record<number, boolean>>({});
 	const [error, setError] = useState<string | null>(null);
+
+	const [editMember, setEditMember] = useState<TeamMember | null>(null);
+	const [editRole, setEditRole] = useState<string>("");
+	const [editLoading, setEditLoading] = useState(false);
+
 	const deleteMember = useDeleteMember();
+	const updateMember = useUpdateMember();
+
 	useEffect(() => {
 		setMembers(initialMembers);
 	}, [initialMembers]);
+
 	async function handleDelete(member: TeamMember) {
-		const confirmMsg = `Remove ${member.name ?? member.email} from "${
-			member.team?.name ?? ""
-		}"?`;
+		const confirmMsg = `Remove ${member.name ?? member.email}?`;
 		if (!confirm(confirmMsg)) return;
 
 		setError(null);
 		setLoadingIds((s) => ({ ...s, [member.id]: true }));
 
-		// optimistic remove
 		const prev = members;
 		setMembers((m) => m.filter((x) => x.id !== member.id));
 		try {
-			// call your API — adjust endpoint to your server
-			// we assume route: DELETE /api/teams/:teamId/members/:memberId
 			await deleteMember.mutateAsync({ memberId: member.id });
 		} catch (e: unknown) {
-			// revert optimistic change
 			setMembers(prev);
 			setError(e instanceof Error ? e?.message : "Failed to delete member");
 		} finally {
@@ -60,65 +76,144 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 		}
 	}
 
+	function handleEditClick(member: TeamMember) {
+		setEditMember(member);
+		setEditRole(member.role ?? "MEMBER");
+	}
+
+	function handleSaveRole() {
+		if (!editMember || editRole === editMember.role) return;
+		setEditLoading(true);
+		updateMember.mutate(
+			{ memberId: editMember.id, role: editRole },
+			{
+				onSuccess: () => {
+					setMembers((prev) =>
+						prev.map((m) =>
+							m.id === editMember.id ? { ...m, role: editRole } : m,
+						),
+					);
+					toast.success("Role updated");
+					setEditMember(null);
+				},
+				onError: (e) => {
+					toast.error(e?.message ?? "Failed to update role");
+				},
+				onSettled: () => {
+					setEditLoading(false);
+				},
+			},
+		);
+	}
+
 	if (members.length === 0) {
-		return <div className="p-6 text-sm text-slate-400">No members found.</div>;
+		return <div className="p-6 text-sm text-muted-foreground">No members found.</div>;
 	}
 
 	return (
-		<div className="space-y-3">
-			{error && <div className="text-sm text-destructive px-2">{error}</div>}
+		<>
+			<div className="space-y-3">
+				{error && <div className="text-sm text-destructive px-2">{error}</div>}
 
-			{members.map((m) => (
-				<div
-					key={m.id}
-					className="flex items-center justify-between gap-4 p-3 bg-popover rounded-md border border-slate-700"
-				>
-					<div className="flex items-center gap-3">
-						{/* avatar (initials) */}
-						<div
-							className={clsx(
-								"flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
-								m.userId
-									? "bg-sky-600 text-white"
-									: "bg-slate-700 text-slate-100",
-							)}
-						>
-							{(m.name || m.email)
-								.split(" ")
-								.map((s) => s[0])
-								.slice(0, 2)
-								.join("")
-								.toUpperCase()}
-						</div>
-
-						<div className="min-w-0">
-							<div className="truncate font-medium">
-								{m.name ?? m.email}
-								<span className="ml-2 text-xs text-slate-400">· {m.role}</span>
+				{members.map((m) => (
+					<div
+						key={m.id}
+						className="flex items-center justify-between gap-4 p-3 bg-popover rounded-md border border-slate-700"
+					>
+						<div className="flex items-center gap-3">
+							<div
+								className={clsx(
+									"flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
+									m.userId
+										? "bg-sky-600 text-white"
+										: "bg-slate-700 text-slate-100",
+								)}
+							>
+								{(m.name || m.email)
+									.split(" ")
+									.map((s) => s[0])
+									.slice(0, 2)
+									.join("")
+									.toUpperCase()}
 							</div>
-							<div className="text-xs text-slate-400 truncate">{m.email}</div>
-							{m.team && (
-								<div className="text-xs text-slate-400 truncate mt-0.5">
-									Team: {m.team.name}
+
+							<div className="min-w-0">
+								<div className="truncate font-medium">
+									{m.name ?? m.email}
+									<span className="ml-2 text-xs text-slate-400">· {m.role}</span>
 								</div>
-							)}
+								<div className="text-xs text-slate-400 truncate">{m.email}</div>
+								{m.team && (
+									<div className="text-xs text-slate-400 truncate mt-0.5">
+										Team: {m.team.name}
+									</div>
+								)}
+							</div>
+						</div>
+
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => handleEditClick(m)}
+								disabled={Boolean(loadingIds[m.id])}
+								title={`Edit role for ${m.name ?? m.email}`}
+							>
+								Edit Role
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => handleDelete(m)}
+								disabled={Boolean(loadingIds[m.id])}
+								className="hover:bg-red-600/10"
+								title={`Remove ${m.name ?? m.email}`}
+							>
+								<Trash2 className="h-4 w-4 text-destructive" />
+							</Button>
 						</div>
 					</div>
+				))}
+			</div>
 
-					<div className="flex items-center gap-2">
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => handleDelete(m)}
-							disabled={Boolean(loadingIds[m.id])}
-							className="hover:bg-red-600/10"
-							title={`Remove ${m.name ?? m.email}`}
-						>
-							<Trash2 className="h-4 w-4 text-destructive" />
-						</Button>
+			<Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
+				<DialogContent className="sm:max-w-[400px]">
+					<DialogHeader>
+						<DialogTitle>Edit Role</DialogTitle>
+						<DialogDescription>
+							Change the role for {editMember?.name ?? editMember?.email}
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="py-4">
+						<Select value={editRole} onValueChange={setEditRole}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="Select role" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="OWNER">Owner</SelectItem>
+								<SelectItem value="ADMIN">Admin</SelectItem>
+								<SelectItem value="MEMBER">Member</SelectItem>
+							</SelectContent>
+						</Select>
 					</div>
-				</div>
-			))}
-		</div>
+
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setEditMember(null)}
+						>
+							Cancel
+						</Button>
+						<Button
+							disabled={editRole === editMember?.role || editLoading}
+							onClick={handleSaveRole}
+						>
+							{editLoading ? "Saving..." : "Save"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }

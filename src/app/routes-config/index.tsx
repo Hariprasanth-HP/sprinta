@@ -1,6 +1,7 @@
 // src/AppRoutes.tsx
 import { Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import AboutPage from "@/app/routes/about/page";
 import TeamPage from "@/app/routes/company/page";
 import LoginPage from "@/app/routes/login/page";
 import SignupPage from "@/app/routes/signup/signup";
@@ -15,6 +16,7 @@ export default function AppRoutes() {
       <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
         <Routes>
           <Route path="/" element={<Navigate to="/team" replace />} />
+          <Route path="/about" element={<AboutPage />} />
 
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />

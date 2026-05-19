@@ -52,7 +52,7 @@ export default function ProtectedRoutes(): JSX.Element {
 	const [selectedProject, setSelectedProject] = useState<Project | undefined>(
 		currentProject ?? undefined,
 	);
-	const projectsQuery = useProjects({ id: currentTeam?.id, userId: auth.user?.id });
+	const projectsQuery = useProjects({ id: currentTeam?.id });
 	const projects: Project[] = useMemo(
 		() => projectsQuery.data ?? [],
 		[projectsQuery.data],

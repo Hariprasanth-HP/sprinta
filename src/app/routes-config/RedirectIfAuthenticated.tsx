@@ -3,9 +3,10 @@ import { Navigate } from "react-router-dom";
 import { useAppSelector } from "@/hooks/useAuth";
 
 export function RedirectIfAuth({ children }: { children: React.ReactNode }) {
-	const auth = useAppSelector((s: any) => s.auth);
-	if (auth.isAuthenticated) {
-		if (auth.userTeam) {
+	const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+	const currentTeam = useAppSelector((s) => s.team.currentTeam);
+	if (isAuthenticated) {
+		if (currentTeam) {
 			return <Navigate to="/team" replace />;
 		}
 		return <Navigate to="/" replace />;

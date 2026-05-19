@@ -7,15 +7,17 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { setTeam } from "@/features/auth/stores/authSlice";
+import { setTeam } from "@/features/auth/stores/teamSlice";
 import { useFetchUserteams } from "@/features/teams/api/team";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
 import type { Team } from "@/types/type";
+import { clearProject } from "@/features/auth/stores/projectSlice";
 export function TeamSelect() {
-	const auth = useAppSelector((s) => s.auth);
+	const currentTeam = useAppSelector((s) => s.team.currentTeam);
+	const user = useAppSelector((s) => s.auth.user);
 	const fetchuserTeams = useFetchUserteams();
 	const [selectedTeam, setSelectedTeam] = React.useState<Team | undefined>(
-		undefined,
+		currentTeam ?? undefined,
 	);
 	const [teams, setTeams] = React.useState<Team[]>([]);
 	const dispatch = useAppDispatch();
@@ -28,23 +30,24 @@ export function TeamSelect() {
 		if (!foundTeam) return;
 
 		setSelectedTeam(foundTeam);
-		dispatch(setTeam({ userTeam: foundTeam }));
+		dispatch(setTeam(foundTeam));
+		dispatch(clearProject());
 		navigate(`/team/${foundTeam.id}`);
 	};
 
 	React.useEffect(() => {
 		async function fetchUserTeamsData() {
-			const { data } = await fetchuserTeams.mutateAsync({ user: auth.user });
+			const { data } = await fetchuserTeams.mutateAsync({ user });
 			setTeams(data);
 		}
 		fetchUserTeamsData();
 	}, []);
 
 	React.useEffect(() => {
-		if (auth.userTeam) {
-			setSelectedTeam(auth.userTeam);
+		if (currentTeam) {
+			setSelectedTeam(currentTeam);
 		}
-	}, [auth.userTeam]);
+	}, [currentTeam]);
 
 	return (
 		<Select onValueChange={handleChange} value={String(selectedTeam?.id)!}>

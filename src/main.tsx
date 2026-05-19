@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider } from "react-redux";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import App from "@/app/App";
 import store from "./store";
 

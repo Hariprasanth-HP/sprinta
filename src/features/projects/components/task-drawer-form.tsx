@@ -87,9 +87,7 @@ export function DrawerInfo({
 	const [subTaskDesc, setSubTaskDesc] = useState<string>("");
 	const [activities, setActivities] = useState<Activity[]>([]);
 	const fetchActivities = useFetchactivitiesFromTask();
-	const auth = useAppSelector((s) => s.auth);
-
-	const statuses = auth.statuses;
+	const statuses = useAppSelector((s) => s.statuses.statuses);
 	useEffect(() => {
 		async function fetchActivitiesFromTask() {
 			const { data } = await fetchActivities.mutateAsync({

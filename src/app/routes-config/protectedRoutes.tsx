@@ -15,7 +15,8 @@ import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { logout, setProject } from "@/features/auth/stores/authSlice";
+import { logout } from "@/features/auth/stores/authSlice";
+import { setProject } from "@/features/auth/stores/projectSlice";
 import { useFetchlistsFromProject } from "@/features/projects/api/list";
 import {
 	type CreateProjectPayload,
@@ -43,13 +44,15 @@ export default function ProtectedRoutes(): JSX.Element {
 	const { theme } = useTheme();
 
 	const auth = useAppSelector((s: { auth: AuthState }) => s.auth);
+	const currentTeam = useAppSelector((s) => s.team.currentTeam);
+	const currentProject = useAppSelector((s) => s.project.currentProject);
 	const dispatch = useAppDispatch();
 
 	// Selected project & team managed locally (keeps UI independent of auth until dispatch)
 	const [selectedProject, setSelectedProject] = useState<Project | undefined>(
-		auth?.userProject ?? undefined,
+		currentProject ?? undefined,
 	);
-	const projectsQuery = useProjects({ id: auth.userTeam?.id });
+	const projectsQuery = useProjects({ id: currentTeam?.id, userId: auth.user?.id });
 	const projects: Project[] = useMemo(
 		() => projectsQuery.data ?? [],
 		[projectsQuery.data],
@@ -57,14 +60,14 @@ export default function ProtectedRoutes(): JSX.Element {
 	const projectsLoading = projectsQuery.isLoading ?? false;
 	const statusesQuery = useStatuses(
 		dispatch,
-		auth.userProject?.id ?? selectedProject?.id,
+		currentProject?.id ?? selectedProject?.id,
 	);
 	const statuses = statusesQuery.data;
 
 	// Mutations / helper API hooks (assumed shapes)
 	const createProject = useCreateProject();
 	const fetchTeam = useFetchteam();
-	const { data: membersData } = useFetchMembersForTeam(auth?.userTeam?.id);
+	const { data: membersData } = useFetchMembersForTeam(currentTeam?.id);
 	const fetchLists = useFetchlistsFromProject();
 	const fetchTasks = useFetchtasksFromProject();
 
@@ -75,7 +78,7 @@ export default function ProtectedRoutes(): JSX.Element {
 	const [taskForTableState, setTaskForTableState] = useState<Task[]>([]);
 
 	const [selectedTeam, setSelectedTeam] = useState<Team | undefined>(
-		() => auth.userTeam ?? undefined,
+		currentTeam ?? undefined,
 	);
 
 	// Derived memos
@@ -100,17 +103,17 @@ export default function ProtectedRoutes(): JSX.Element {
 				const currentProjectStr = localStorage.getItem("project")
 				if (currentProjectStr) {
 					const currentProject = JSON.parse(currentProjectStr) as Project;
-					if (currentProject.teamId !== auth.userTeam?.id) {
+					if (currentProject.teamId !== currentTeam?.id) {
 						localStorage.removeItem("project");
 					}
 					else {
 						setSelectedProject(currentProject);
-						await dispatch(setProject({ userProject: currentProject }));
+						await dispatch(setProject(currentProject));
 					}
 				}
 				else {
 					setSelectedProject(projects?.[0]);
-					await dispatch(setProject({ userProject: projects?.[0] }));
+					await dispatch(setProject(projects?.[0]));
 				}
 
 				setProjectsState(projects);
@@ -126,11 +129,10 @@ export default function ProtectedRoutes(): JSX.Element {
 		let mounted = true;
 
 		async function bootTeamAndMembers() {
-			if (!auth.userTeam?.id) return;
+			if (!currentTeam?.id) return;
 
 			try {
-				// fetch fresh team data
-				const { data } = await fetchTeam.mutateAsync({ id: auth.userTeam.id });
+				const { data } = await fetchTeam.mutateAsync({ id: currentTeam.id });
 				if (mounted && data) {
 					setSelectedTeam(data);
 				}
@@ -144,7 +146,7 @@ export default function ProtectedRoutes(): JSX.Element {
 				if (existingProjectStr && mounted) {
 					try {
 						const parsedProject = JSON.parse(existingProjectStr) as Project;
-						if (parsedProject?.teamId !== auth.userTeam.id) {
+						if (parsedProject?.teamId !== currentTeam?.id) {
 							localStorage.removeItem("project");
 							setSelectedProject(undefined);
 						}
@@ -163,18 +165,18 @@ export default function ProtectedRoutes(): JSX.Element {
 		return () => {
 			mounted = false;
 		};
-	}, [membersData, auth?.userTeam?.id]);
+	}, [membersData, currentTeam?.id]);
 
 	// ---- Keep selectedProject in sync with auth.userProject (auth is the source-of-truth) ----
 	useEffect(() => {
-		if (auth.userProject) {
-			setSelectedProject(auth.userProject ?? undefined);
+		if (currentProject) {
+			setSelectedProject(currentProject);
 		} else if (projects.length > 0) {
 			setSelectedProject(projects?.[0]);
 		} else {
 			setSelectedProject(undefined);
 		}
-	}, [auth.userProject, projects]);
+	}, [currentProject, projects]);
 
 	// ---- When selectedProject changes -> fetch lists & tasks for it ----
 	useEffect(() => {
@@ -223,7 +225,7 @@ export default function ProtectedRoutes(): JSX.Element {
 
 	const handleCreateProject = useCallback(
 		async (projectPayload: Partial<Project>): Promise<Project | undefined> => {
-			const teamId = auth.userTeam?.id;
+			const teamId = currentTeam?.id;
 			if (!teamId) {
 				toast.error("Cannot create project: missing team");
 				return;
@@ -244,7 +246,7 @@ export default function ProtectedRoutes(): JSX.Element {
 				// createdProject is typed Project thanks to unwrap above
 				setSelectedProject(createdProject);
 				// dispatch synchronously — no need for setTimeout
-				dispatch(setProject({ userProject: createdProject }));
+				dispatch(setProject(createdProject));
 
 				toast.success("Project created successfully");
 				return createdProject;
@@ -258,7 +260,7 @@ export default function ProtectedRoutes(): JSX.Element {
 				return;
 			}
 		},
-		[auth.userTeam?.id, auth.user?.id, createProject, dispatch],
+		[currentTeam?.id, auth.user?.id, createProject, dispatch],
 	);
 
 	// Refetch projects convenience wrapper

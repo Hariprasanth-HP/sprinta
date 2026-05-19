@@ -1,4 +1,3 @@
-import type { AuthState } from "@/types/auth";
 import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useContext, useMemo, useState } from "react";
@@ -52,9 +51,8 @@ export default function AddTaskForm({
 	type?: string;
 	status?: SelectedColumn | undefined;
 }) {
-	const auth = useAppSelector((s: { auth: AuthState }) => s.auth);
-	console.log("auth", auth)
-	const [loading, setLoading] = useState(false);
+	const auth = useAppSelector((s) => s.auth);
+	const statuses = useAppSelector((s) => s.statuses.statuses);
 	const {
 		usersList,
 		projectsState,
@@ -62,9 +60,7 @@ export default function AddTaskForm({
 		setTaskForTableState,
 		selectedProject,
 	} = useContext(SideBarContext)!;
-
-
-	const statuses = auth.statuses;
+	const [loading, setLoading] = useState(false);
 	const [listState, setListState] = useState(() => listForTable);
 	const [selectedStatusId] = useState(
 		statuses!.length > 0 ? () => statuses?.[0] : undefined,

@@ -34,7 +34,7 @@ export default function CreateListForm({
 	const [formData, setFormData] = useState<FormData>({
 		name: initial.name ?? "",
 	});
-	const auth = useAppSelector((s) => s.auth);
+	const currentProject = useAppSelector((s) => s.project.currentProject);
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -50,17 +50,17 @@ export default function CreateListForm({
 		setError(null);
 		return true;
 	};
-	console.log("auth", auth);
+	
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 		setLoading(true);
 		try {
-			if (auth?.userProject?.id) {
+			if (currentProject?.id) {
 				const { data } = await createList.mutateAsync({
 					...formData,
-					projectId: auth.userProject.id!,
+					projectId: currentProject.id,
 				});
 				toast.success("List created successfully");
 				setListForTableState((prev: List[]) => [...prev, data]);

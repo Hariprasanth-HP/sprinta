@@ -112,7 +112,7 @@ export function NavTeam() {
 				</SidebarMenuItem>
 			</SidebarMenu>
 			<Dialog open={showTeamDialog} onOpenChange={setShowTeamDialog}>
-				<DialogContent className="sm:max-w-[90%] sm:max-h-[95%] h-[85%]: overflow-auto ">
+				<DialogContent className="sm:max-w-[90%] overflow-auto">
 					<DialogHeader>
 						<DialogTitle>Manage team</DialogTitle>
 					</DialogHeader>
@@ -272,59 +272,57 @@ export function ManageTeam() {
 		navigate("/team");
 	}
 
-	return (
-		<>
-			<div className="flex h-full ">
-				<div className="flex-1 px-8 overflow-auto">
-					<div className="flex flex-col  gap-4">
-						<h2 className="text-2xl font-semibold">{team?.name}</h2>
-						<Tabs defaultValue="add" className="ml-6">
-							<TabsList className="bg-transparent p-0">
-								<TabsTrigger value="add" className="text-sm">
-									Add Members
-								</TabsTrigger>
-								<TabsTrigger value="members" className="text-sm">
-									Manage Members
-								</TabsTrigger>
-							</TabsList>
-							<TabsContent value="add">
-								<form
-									onSubmit={(e) => handleSubmit(e)}
-									className="mt-6 border-t border-slate-700 pt-6"
-								>
-									<h3 className="text-xs uppercase text-slate-300 font-semibold">
-										Add people to your workspace
-									</h3>
+	return <>
+		<div className="flex h-full flex-col sm:flex-row">
+			<div className="flex-1 p-3 sm:p-4 sm:px-6 md:px-8 overflow-auto">
+				<div className="flex flex-col gap-4 max-w-4xl mx-auto">
+					<h2 className="text-lg sm:text-2xl font-semibold">{team?.name}</h2>
+					<Tabs defaultValue="add" className="w-full">
+						<TabsList className="bg-transparent p-0 flex h-auto gap-1 w-full overflow-x-auto">
+							<TabsTrigger value="add" className="text-xs sm:text-sm px-3 py-1.5 whitespace-nowrap">
+								Add Members
+							</TabsTrigger>
+							<TabsTrigger value="members" className="text-xs sm:text-sm px-3 py-1.5 whitespace-nowrap">
+								Manage Members
+							</TabsTrigger>
+						</TabsList>
+						<TabsContent value="add">
+							<form
+								onSubmit={(e) => handleSubmit(e)}
+								className="mt-6 border-t border-slate-700 pt-6"
+							>
+								<h3 className="text-xs uppercase text-slate-300 font-semibold">
+									Add people to your workspace
+								</h3>
 
-									<div className="grid grid-cols-12 gap-4 mt-4 items-start">
-										{/* Emails column */}
-										<div className="col-span-6">
-											<Label className="text-slate-300">Email Address</Label>
-											<div className="space-y-3 mt-2">
-												{rows.map((r) => (
-													<div key={`email-${r.id}`} className="relative">
-														<Input
-															value={r.email}
-															onChange={(ev) =>
-																updateRow(r.id, { email: ev.target.value })
-															}
-															placeholder="email@example.com"
-															aria-invalid={Boolean(errors[r.id]?.email)}
-														/>
-														{errors[r.id]?.email && (
-															<div className="text-sm text-destructive mt-1">
-																{errors[r.id]?.email}
-															</div>
-														)}
-													</div>
-												))}
-											</div>
+								<div className="space-y-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 sm:space-y-0 mt-4">
+									{/* Emails column */}
+									<div className="space-y-3">
+										<Label className="text-slate-300">Email Address</Label>
+										<div className="space-y-2 sm:space-y-3 mt-2">
+											{rows.map((r) => (
+												<div key={`email-${r.id}`} className="relative">
+													<Input
+														value={r.email}
+														onChange={(ev) =>
+															updateRow(r.id, { email: ev.target.value })
+														}
+														placeholder="email@example.com"
+														aria-invalid={Boolean(errors[r.id]?.email)}
+													/>
+													{errors[r.id]?.email && (
+														<div className="text-sm text-destructive mt-1">
+															{errors[r.id]?.email}
+														</div>
+													)}
+												</div>
+											))}
 										</div>
 
 										{/* Name column */}
-										<div className="col-span-3">
+										<div className="space-y-3">
 											<Label className="text-slate-300">Name (optional)</Label>
-											<div className="space-y-3 mt-2">
+											<div className="space-y-2 sm:space-y-3 mt-2">
 												{rows.map((r) => (
 													<Input
 														key={`name-${r.id}`}
@@ -339,13 +337,12 @@ export function ManageTeam() {
 										</div>
 
 										{/* Role column */}
-										<div className="col-span-3">
+										<div className="space-y-3">
 											<Label className="text-slate-300">Role</Label>
-											<div className="space-y-3 mt-2">
+											<div className="space-y-2 sm:space-y-3 mt-2">
 												{rows.map((r) => (
 													<div key={`role-${r.id}`}>
 														<Select
-															// simple uncontrolled Select - we manage value via change handler
 															onValueChange={(value) =>
 																updateRow(r.id, { role: value })
 															}
@@ -362,7 +359,6 @@ export function ManageTeam() {
 																	<SelectItem
 																		key={role}
 																		value={role}
-
 																	>
 																		{role.charAt(0) + role.slice(1).toLowerCase()}
 																	</SelectItem>
@@ -380,7 +376,7 @@ export function ManageTeam() {
 										</div>
 									</div>
 
-									<div className="mt-4 flex items-center gap-2">
+									<div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
 										<Button type="submit" variant="default" disabled={loading}>
 											{loading ? "Adding…" : "Add to Workspace"}
 										</Button>
@@ -397,24 +393,25 @@ export function ManageTeam() {
 										</div>
 									)}
 
-									{/* spacer */}
 									<div className="h-10" />
-								</form>
-							</TabsContent>
-							<TabsContent value="members">
-								<ManageMembers teamId={Number(team?.id)} />
-							</TabsContent>
-						</Tabs>
-						<Button
-							variant="default"
-							disabled={loading}
-							onClick={handleCreateWorkspace}
-						>
-							Create a workspace
-						</Button>
-					</div>
+								</div>
+							</form>
+						</TabsContent>
+						<TabsContent value="members">
+							<ManageMembers teamId={Number(team?.id)} />
+						</TabsContent>
+					</Tabs>
+					<Button
+						variant="default"
+						disabled={loading}
+						onClick={handleCreateWorkspace}
+					>
+						Create a workspace
+					</Button>
 				</div>
 			</div>
-		</>
-	);
+		</div>
+	</>
+
 }
+

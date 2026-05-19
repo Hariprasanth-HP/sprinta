@@ -118,7 +118,6 @@ export default function Page() {
 				header: "Actions",
 				cell: ({ row }) => {
 					const item = row.original as Task | undefined;
-
 					return (
 						<div className="flex items-center gap-2">
 							<Button
@@ -145,7 +144,7 @@ export default function Page() {
 									setShowTaskDelete(true);
 								}}
 								className="text-destructive"
-								disabled={item?.subTasks?.length !== 0}
+								disabled={item?.parentTaskId ? false : item?.subTasks?.length !== 0}
 							>
 								<Trash className="h-4 w-4" />
 							</Button>

@@ -70,14 +70,17 @@ async function apiRequest<T = unknown>(
 	path: string,
 	method: Method = "GET",
 	body?: unknown,
-	opts?: { retry?: boolean; withAuth?: boolean },
+	opts?: { retry?: boolean; withAuth?: boolean; isFormData?: boolean },
 ): Promise<T> {
-	const { retry = true, withAuth = true } = opts ?? {};
+	const { retry = true, withAuth = true, isFormData = false } = opts ?? {};
 
 	const token = store.getState().auth?.token;
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-	};
+	const headers: Record<string, string> = {};
+
+	if (!isFormData) {
+		headers["Content-Type"] = "application/json";
+	}
+
 	if (withAuth && token) {
 		headers["Authorization"] = `Bearer ${token}`;
 	}
@@ -85,7 +88,7 @@ async function apiRequest<T = unknown>(
 	const res = await fetch(`${API_BASE}${path}`, {
 		method,
 		headers,
-		body: body !== undefined ? JSON.stringify(body) : undefined,
+		body: (isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined) as BodyInit | null | undefined,
 		credentials: "include", // send cookies (refresh token cookie is HttpOnly)
 	});
 
@@ -108,7 +111,7 @@ async function apiRequest<T = unknown>(
 			const retryRes = await fetch(`${API_BASE}${path}`, {
 				method,
 				headers: retryHeaders,
-				body: body !== undefined ? JSON.stringify(body) : undefined,
+				body: (isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined) as BodyInit | null | undefined,
 				credentials: "include",
 			});
 
@@ -167,10 +170,11 @@ export async function apiGet<T = unknown>(
 export async function apiPost<T = unknown>(
 	path: string,
 	body?: unknown,
-	opts?: { withAuth?: boolean },
+	opts?: { withAuth?: boolean; isFormData?: boolean },
 ) {
 	return apiRequest<T>(path, "POST", body, {
 		withAuth: opts?.withAuth ?? true,
+		isFormData: opts?.isFormData ?? false,
 	});
 }
 

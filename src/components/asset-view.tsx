@@ -1,12 +1,29 @@
 import { useState } from "react";
+import { X } from "lucide-react";
+import { useDeleteUploadedMedia } from "@/lib/api/upload";
 import { type Asset, AssetType } from "@/types/type";
 
 interface Props {
 	assets: Asset[];
+	onDelete?: (publicId: string) => void;
 }
 
-export const AssetGrid = ({ assets }: Props) => {
+export const AssetGrid = ({ assets, onDelete }: Props) => {
 	const [selected, setSelected] = useState<Asset | null>(null);
+	const [confirmDelete, setConfirmDelete] = useState<Asset | null>(null);
+	const deleteAsset = useDeleteUploadedMedia();
+
+	const handleDelete = async () => {
+		if (!confirmDelete || !confirmDelete?.publicId) return;
+		try {
+			await deleteAsset.mutateAsync(confirmDelete?.publicId);
+			onDelete?.(confirmDelete.publicId);
+		} catch (err) {
+			console.error("Failed to delete asset", err);
+		} finally {
+			setConfirmDelete(null);
+		}
+	};
 
 	return (
 		<>
@@ -16,8 +33,18 @@ export const AssetGrid = ({ assets }: Props) => {
 					<div
 						key={asset.publicId}
 						onClick={() => setSelected(asset)}
-						className="cursor-pointer rounded-lg overflow-hidden border hover:shadow-md transition"
+						className="cursor-pointer rounded-lg overflow-hidden border hover:shadow-md transition relative group"
 					>
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								setConfirmDelete(asset);
+							}}
+							className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition z-10 hover:bg-red-600"
+						>
+							<X className="h-4 w-4" />
+						</button>
+
 						{asset.type === AssetType.IMAGE && (
 							<img
 								src={asset.url}
@@ -47,6 +74,33 @@ export const AssetGrid = ({ assets }: Props) => {
 					</div>
 				))}
 			</div>
+
+			{/* DELETE CONFIRMATION */}
+			{confirmDelete && (
+				<div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+					<div className="bg-slate-900 text-white rounded-lg p-6 max-w-sm w-full mx-4">
+						<h3 className="text-lg font-semibold mb-2">Delete Asset?</h3>
+						<p className="text-slate-400 mb-6 text-sm">
+							Are you sure you want to delete this asset? This action cannot be undone.
+						</p>
+						<div className="flex gap-3 justify-end">
+							<button
+								onClick={() => setConfirmDelete(null)}
+								className="px-4 py-2 rounded border border-slate-600 hover:bg-slate-800 text-sm"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleDelete}
+								disabled={deleteAsset.isPending}
+								className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-sm disabled:opacity-50"
+							>
+								{deleteAsset.isPending ? "Deleting..." : "Delete"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* MODAL */}
 			{selected && (
@@ -103,7 +157,3 @@ const AssetModal = ({ asset, onClose }: ModalProps) => {
 		</div>
 	);
 };
-interface ModalProps {
-	asset: Asset;
-	onClose: () => void;
-}

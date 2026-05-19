@@ -30,7 +30,7 @@ export default function FileUpload({
 	const filePickerRef = useRef<HTMLInputElement>(null);
 
 	/* ---------------- helpers ---------------- */
-	const { mutateAsync: uploadMedia } = useUploadMedia(Number(task?.id));
+	const { mutateAsync: uploadMedia } = useUploadMedia();
 
 	const openFilePicker = () => {
 		filePickerRef.current?.click();
@@ -50,21 +50,10 @@ export default function FileUpload({
 
 		setUploads((prev) => [...uploadItems, ...prev]);
 
-		const controller = new AbortController();
-
 		try {
 			const { data = [] } = await uploadMedia({
 				files,
-				signal: controller.signal,
-				onProgress: (percent) => {
-					setUploads((prev) =>
-						prev.map((item) =>
-							uploadItems.some((u) => u.id === item.id)
-								? { ...item, progress: percent }
-								: item,
-						),
-					);
-				},
+				taskId: Number(task?.id),
 			});
 			setTask?.((prev: Task | undefined) => {
 				if (prev) {
@@ -137,7 +126,7 @@ export default function FileUpload({
 								<Button
 									variant="link"
 									className="text-primary p-0 h-auto font-normal"
-									// onClick={openFilePicker}
+								// onClick={openFilePicker}
 								>
 									browse files
 								</Button>{" "}
@@ -259,7 +248,18 @@ export default function FileUpload({
 				</div>
 			</div>
 			{task?.assets && task?.assets?.length > 0 && (
-				<AssetGrid assets={task.assets} />
+				<AssetGrid
+					assets={task.assets}
+					onDelete={(publicId) =>
+						setTask?.((prev) => {
+							if (!prev) return prev;
+							return {
+								...prev,
+								assets: (prev.assets ?? []).filter((asset) => asset.publicId !== publicId),
+							};
+						})
+					}
+				/>
 			)}
 		</>
 	);

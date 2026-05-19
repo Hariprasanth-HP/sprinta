@@ -1,57 +1,57 @@
-// hooks/useactivity.ts
 import { useMutation } from "@tanstack/react-query";
-import { api } from "../axiosHelper";
-// --- API helpers (tiny wrappers) ---
-// adjust paths to match your server routes
-
-export type UploadedMedia = {
-	url: string;
-	publicId: string;
-	type: "image" | "video";
-};
+import { apiDelete, apiGet, apiPost } from "@/lib/apiClient";
+import type { Asset } from "@/types/type";
 
 export type UploadMediaRes = {
 	success: boolean;
 	count: number;
-	data: UploadedMedia[];
+	data: Asset[];
 };
-// hooks/useUploadActivity.ts
 
-export function useUploadMedia(id: number) {
-	return useMutation({
-		mutationFn: ({
-			files,
-			onProgress,
-			signal,
-		}: {
-			files: File[];
-			onProgress?: (percent: number) => void;
-			signal?: AbortSignal;
-		}) => uploadFilesAPI(files, id, { onProgress, signal }),
-	});
-}
-export async function uploadFilesAPI(
+export async function uploadFilesApi(
 	files: File[],
-	id: number,
-	options?: {
-		onProgress?: (percent: number) => void;
-		signal?: AbortSignal;
-	},
+	taskId: number,
 ) {
 	const formData = new FormData();
-
 	files.forEach((file) => {
 		formData.append("files", file);
 	});
 
-	const res = await api.post(`/upload/multiple?taskId=${id}`, formData, {
-		signal: options?.signal,
-		onUploadProgress: (event) => {
-			if (!event.total) return;
-			const percent = Math.round((event.loaded * 100) / event.total);
-			options?.onProgress?.(percent);
-		},
-	});
+	return apiPost<UploadMediaRes>(
+		`/upload/multiple?taskId=${taskId}`,
+		formData,
+		{ isFormData: true },
+	);
+}
 
-	return res.data;
+export async function deleteUploadedMediaApi(publicId: string) {
+	return apiDelete<{ success: boolean }>(`/upload/${publicId}`);
+}
+
+export async function getUploadedMediaApi(taskId: number) {
+	return apiGet<UploadMediaRes>(`/upload?taskId=${taskId}`);
+}
+
+export function useUploadMedia() {
+	return useMutation({
+		mutationFn: ({
+			files,
+			taskId,
+		}: {
+			files: File[];
+			taskId: number;
+		}) => uploadFilesApi(files, taskId),
+	});
+}
+
+export function useDeleteUploadedMedia() {
+	return useMutation({
+		mutationFn: (publicId: string) => deleteUploadedMediaApi(publicId),
+	});
+}
+
+export function useGetUploadedMedia(taskId: number) {
+	return useMutation({
+		mutationFn: () => getUploadedMediaApi(taskId),
+	});
 }

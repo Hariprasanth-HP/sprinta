@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { useDeleteMember, useFetchMembersForTeam, useUpdateMember } from "@/features/teams/api/member";
 import type { TeamMember } from "@/types/type";
+import { useAppSelector } from "@/hooks/useAuth";
+import { TeamRole } from "@/components/nav-team";
 
 type ManageMembersProps = {
 	teamId: number;
@@ -39,8 +41,12 @@ type Props = {
 
 export default function TeamMembersList({ initialMembers = [] }: Props) {
 	const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+	const user = useAppSelector((state) => state.auth.user);
+	const userData = members.find((member) => member.userId === user?.id)
+	const isAdminOrOwner = userData?.role === TeamRole.ADMIN || userData?.role === TeamRole.OWNER
+	console.log('useruser', initialMembers, user, isAdminOrOwner);
+
 	const [loadingIds, setLoadingIds] = useState<Record<number, boolean>>({});
-	const [error, setError] = useState<string | null>(null);
 
 	const [editMember, setEditMember] = useState<TeamMember | null>(null);
 	const [editRole, setEditRole] = useState<string>("");
@@ -56,17 +62,18 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 	async function handleDelete(member: TeamMember) {
 		const confirmMsg = `Remove ${member.name ?? member.email}?`;
 		if (!confirm(confirmMsg)) return;
-
-		setError(null);
 		setLoadingIds((s) => ({ ...s, [member.id]: true }));
 
 		const prev = members;
 		setMembers((m) => m.filter((x) => x.id !== member.id));
 		try {
 			await deleteMember.mutateAsync({ memberId: member.id });
+			toast.success("Member deleted");
+
 		} catch (e: unknown) {
 			setMembers(prev);
-			setError(e instanceof Error ? e?.message : "Failed to delete member");
+			toast.error(e instanceof Error ? e?.message : "Failed to delete member");
+
 		} finally {
 			setLoadingIds((s) => {
 				const copy = { ...s };
@@ -113,8 +120,6 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 	return (
 		<>
 			<div className="space-y-3">
-				{error && <div className="text-sm text-destructive px-2">{error}</div>}
-
 				{members.map((m) => (
 					<div
 						key={m.id}
@@ -156,8 +161,9 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 								variant="outline"
 								size="sm"
 								onClick={() => handleEditClick(m)}
-								disabled={Boolean(loadingIds[m.id])}
+								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
 								title={`Edit role for ${m.name ?? m.email}`}
+
 							>
 								Edit Role
 							</Button>
@@ -165,7 +171,7 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 								variant="ghost"
 								size="sm"
 								onClick={() => handleDelete(m)}
-								disabled={Boolean(loadingIds[m.id])}
+								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
 								className="hover:bg-red-600/10"
 								title={`Remove ${m.name ?? m.email}`}
 							>

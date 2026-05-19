@@ -15,7 +15,6 @@ export async function createMembersApi(payload: CreateMembersPayload) {
 	// expects: { success: boolean; data: Member[] } OR adjust if API returns different shape
 	return apiPost<MembersRes>(`/member/${payload.teamId}`, {
 		members: payload.members,
-		userId: payload.userId,
 	});
 }
 
@@ -45,7 +44,7 @@ export async function getMemberApi(id: number) {
 }
 
 /** Get members associated with a user (body POST payload) */
-export async function getMembersFromUserApi(payload: { userId: number }) {
+export async function getMembersFromUserApi(payload: {}) {
 	return apiPost<MembersRes>(`/member/user`, payload);
 }
 

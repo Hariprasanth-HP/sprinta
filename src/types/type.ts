@@ -58,7 +58,7 @@ export interface Team {
 export interface TeamMember {
 	id: number;
 	teamId: number;
-	userId: number | null; // optional until signup
+	userId: string | null; // optional until signup
 	email: string;
 	name: string | null;
 	role: string;

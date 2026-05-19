@@ -31,13 +31,13 @@ export const PROJECT_KEY = (id: number | string) =>
  * - team can be undefined (hook will be disabled)
  * - keeps previous data while refetching
  */
-export function useProjects(team?: { id?: number | undefined, userId?: string | null }) {
+export function useProjects(team?: { id?: number | undefined }) {
 	return useQuery<Project[], Error>({
 		queryKey: PROJECT_BY_TEAM_KEY(team?.id ?? "unknown"),
 		queryFn: async () => {
-			if (!team?.id || !team.userId) return [];
+			if (!team?.id) return [];
 			const res = await apiGet<ApiResp<Project[]>>(
-				`/project?teamId=${team.id}&userId=${team.userId}`,
+				`/project?teamId=${team.id}`,
 			);
 			return unwrap(res);
 		},

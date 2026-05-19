@@ -63,7 +63,7 @@ export interface TeamMember {
 	name: string | null;
 	role: string;
 	addedAt: ISODateString;
-	addedById: number | null;
+	addedById: string | null;
 
 	// Relations
 	team?: Team;

@@ -30,7 +30,7 @@ export function AddTaskDialog({
 }) {
 	return (
 		<Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-			<DialogContent className="sm:max-w-[70%] sm:max-h-[90%] overflow-auto">
+			<DialogContent className="sm:max-w-[70%] overflow-auto">
 				<DialogHeader>
 					<DialogTitle>{type === "edit" ? "Edit" : "Create"} Task</DialogTitle>
 				</DialogHeader>

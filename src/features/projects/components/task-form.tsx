@@ -189,7 +189,7 @@ export default function AddTaskForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="space-y-4 bg-card p-4 sm:p-6 rounded-md text-card-foreground overflow-auto max-h-[90vh] touch-manipulation"
+			className="space-y-4 bg-card p-4 sm:p-6 rounded-md text-card-foreground"
 		>
 			<FieldGroup>
 				<div className="space-y-4">
@@ -390,7 +390,7 @@ export default function AddTaskForm({
 									<SelectItem key={u.userId} value={String(u.userId)}>
 										<div className="flex items-center gap-2">
 											<Avatar className="h-5 w-5">
-												<AvatarFallback>{u.name!.slice(0, 2)}</AvatarFallback>
+												<AvatarFallback>{u.name?.slice(0, 2)}</AvatarFallback>
 											</Avatar>
 											<span>{u.name}</span>
 										</div>

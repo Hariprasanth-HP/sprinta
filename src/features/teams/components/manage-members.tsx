@@ -119,16 +119,16 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 
 	return (
 		<>
-			<div className="space-y-3">
+			<div className="space-y-2 sm:space-y-3">
 				{members.map((m) => (
 					<div
 						key={m.id}
-						className="flex items-center justify-between gap-4 p-3 bg-popover rounded-md border border-slate-700"
+						className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-popover rounded-md border border-slate-700"
 					>
-						<div className="flex items-center gap-3">
+						<div className="flex items-center gap-3 min-w-0">
 							<div
 								className={clsx(
-									"flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
+									"flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-medium",
 									m.userId
 										? "bg-sky-600 text-white"
 										: "bg-slate-700 text-slate-100",
@@ -142,37 +142,37 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 									.toUpperCase()}
 							</div>
 
-							<div className="min-w-0">
-								<div className="truncate font-medium">
+							<div className="min-w-0 flex-1">
+								<div className="truncate font-medium text-sm">
 									{m.name ?? m.email}
-									<span className="ml-2 text-xs text-slate-400">· {m.role}</span>
+									<span className="ml-1 sm:ml-2 text-xs text-slate-400">· {m.role}</span>
 								</div>
 								<div className="text-xs text-slate-400 truncate">{m.email}</div>
 								{m.team && (
-									<div className="text-xs text-slate-400 truncate mt-0.5">
+									<div className="text-xs text-slate-400 truncate mt-0.5 sm:hidden">
 										Team: {m.team.name}
 									</div>
 								)}
 							</div>
 						</div>
 
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 ml-auto sm:ml-0">
 							<Button
 								variant="outline"
 								size="sm"
+								className="text-xs px-2 py-1 h-7 sm:h-8 sm:text-sm sm:px-3"
 								onClick={() => handleEditClick(m)}
 								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
 								title={`Edit role for ${m.name ?? m.email}`}
-
 							>
-								Edit Role
+								Edit
 							</Button>
 							<Button
 								variant="ghost"
 								size="sm"
+								className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-600/10"
 								onClick={() => handleDelete(m)}
 								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
-								className="hover:bg-red-600/10"
 								title={`Remove ${m.name ?? m.email}`}
 							>
 								<Trash2 className="h-4 w-4 text-destructive" />
@@ -183,7 +183,7 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 			</div>
 
 			<Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
-				<DialogContent className="sm:max-w-[400px]">
+				<DialogContent className="sm:max-w-[400px] overflow-auto">
 					<DialogHeader>
 						<DialogTitle>Edit Role</DialogTitle>
 						<DialogDescription>

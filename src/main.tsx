@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { Toaster } from "@/components/ui/sonner";
 import App from "@/app/App";
 import store from "./store";
+import { SearchProvider } from "./contexts/search-context";
 
 const root = createRoot(document.getElementById("root")!);
 const queryClient = new QueryClient();
@@ -13,8 +14,10 @@ root.render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>
 			<Provider store={store}>
-				<App />
-				<Toaster />
+				<SearchProvider>
+					<App />
+					<Toaster />
+				</SearchProvider>
 			</Provider>
 		</QueryClientProvider>
 	</React.StrictMode>,

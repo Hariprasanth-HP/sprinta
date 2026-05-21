@@ -42,9 +42,8 @@ type Props = {
 export default function TeamMembersList({ initialMembers = [] }: Props) {
 	const [members, setMembers] = useState<TeamMember[]>(initialMembers);
 	const user = useAppSelector((state) => state.auth.user);
-	const userData = members.find((member) => member.userId === user?.id)
-	const isAdminOrOwner = userData?.role === TeamRole.ADMIN || userData?.role === TeamRole.OWNER
-	console.log('useruser', initialMembers, user, isAdminOrOwner);
+	const userData = members.find((member) => member.userId === user?.id);
+	const isAdminOrOwner = userData?.role === TeamRole.ADMIN || userData?.role === TeamRole.OWNER;
 
 	const [loadingIds, setLoadingIds] = useState<Record<number, boolean>>({});
 
@@ -119,68 +118,89 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 
 	return (
 		<>
-			<div className="space-y-2 sm:space-y-3">
-				{members.map((m) => (
-					<div
-						key={m.id}
-						className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-popover rounded-md border border-slate-700"
-					>
-						<div className="flex items-center gap-3 min-w-0">
-							<div
-								className={clsx(
-									"flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-medium",
-									m.userId
-										? "bg-sky-600 text-white"
-										: "bg-slate-700 text-slate-100",
-								)}
-							>
-								{(m.name || m.email)
-									.split(" ")
-									.map((s) => s[0])
-									.slice(0, 2)
-									.join("")
-									.toUpperCase()}
+			{members.length === 0 ? (
+				<div className="text-center py-12 text-muted-foreground">
+					<p className="text-sm">No members in this team yet.</p>
+					<p className="text-xs mt-1">Invite members using the Add Members tab.</p>
+				</div>
+			) : (
+				<div className="space-y-3">
+					{members.map((m) => (
+						<div
+							key={m.id}
+							className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card rounded-xl border hover:border-slate-600 transition-colors"
+						>
+							<div className="flex items-center gap-3 min-w-0 flex-1">
+								<div
+									className={clsx(
+										"flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+										m.userId
+											? "bg-sky-600 text-white"
+											: "bg-muted text-muted-foreground",
+									)}
+								>
+									{(m.name || m.email)
+										.split(" ")
+										.map((s) => s[0])
+										.slice(0, 2)
+										.join("")
+										.toUpperCase()}
+								</div>
+
+								<div className="min-w-0 flex-1">
+									<p className="font-medium truncate">{m.name ?? "Unnamed"}</p>
+									<p className="text-xs text-muted-foreground truncate">{m.email}</p>
+								</div>
+
+								<span className={clsx(
+									"px-2 py-0.5 rounded-full text-xs font-medium shrink-0 hidden sm:inline-block",
+									m.role === "OWNER" && "bg-purple-500/20 text-purple-400",
+									m.role === "ADMIN" && "bg-blue-500/20 text-blue-400",
+									m.role === "MEMBER" && "bg-green-500/20 text-green-400",
+								)}>
+									{m.role}
+								</span>
 							</div>
 
-							<div className="min-w-0 flex-1">
-								<div className="truncate font-medium text-sm">
-									{m.name ?? m.email}
-									<span className="ml-1 sm:ml-2 text-xs text-slate-400">· {m.role}</span>
-								</div>
-								<div className="text-xs text-slate-400 truncate">{m.email}</div>
-								{m.team && (
-									<div className="text-xs text-slate-400 truncate mt-0.5 sm:hidden">
-										Team: {m.team.name}
+							<div className="flex items-center justify-between sm:justify-end gap-2 pl-13 sm:pl-0">
+								<span className={clsx(
+									"px-2 py-0.5 rounded-full text-xs font-medium sm:hidden",
+									m.role === "OWNER" && "bg-purple-500/20 text-purple-400",
+									m.role === "ADMIN" && "bg-blue-500/20 text-blue-400",
+									m.role === "MEMBER" && "bg-green-500/20 text-green-400",
+								)}>
+									{m.role}
+								</span>
+
+								{isAdminOrOwner && (
+									<div className="flex items-center gap-1">
+										<Button
+											variant="ghost"
+											size="sm"
+											className="text-xs h-7 px-2"
+											onClick={() => handleEditClick(m)}
+											disabled={Boolean(loadingIds[m.id])}
+											title={`Edit role for ${m.name ?? m.email}`}
+										>
+											Edit
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7 text-destructive hover:bg-destructive/10"
+											onClick={() => handleDelete(m)}
+											disabled={Boolean(loadingIds[m.id])}
+											title={`Remove ${m.name ?? m.email}`}
+										>
+											<Trash2 className="h-4 w-4" />
+										</Button>
 									</div>
 								)}
 							</div>
 						</div>
-
-						<div className="flex items-center gap-2 ml-auto sm:ml-0">
-							<Button
-								variant="outline"
-								size="sm"
-								className="text-xs px-2 py-1 h-7 sm:h-8 sm:text-sm sm:px-3"
-								onClick={() => handleEditClick(m)}
-								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
-								title={`Edit role for ${m.name ?? m.email}`}
-							>
-								Edit
-							</Button>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-red-600/10"
-								onClick={() => handleDelete(m)}
-								disabled={Boolean(loadingIds[m.id]) || !isAdminOrOwner}
-								title={`Remove ${m.name ?? m.email}`}
-							>
-								<Trash2 className="h-4 w-4 text-destructive" />
-							</Button>
-						</div>
-					</div>
-				))}
-			</div>
+					))}
+				</div>
+			)}
 
 			<Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
 				<DialogContent className="sm:max-w-[400px] overflow-auto">

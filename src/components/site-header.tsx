@@ -18,6 +18,7 @@ import { type Project, ViewMode, ViewModeLabel } from "@/types/type";
 import { AddListOrTaskPopover } from "./add-task-list";
 import { ModeToggle } from "./mode-toggle";
 import ViewModeDropdown from "./view-model";
+import { GlobalSearch } from "./global-search";
 export function SiteHeader({
 	logout,
 	projects,
@@ -95,6 +96,7 @@ export function SiteHeader({
 					</>
 				)}
 				<div className="ml-auto flex items-center gap-2">
+					<GlobalSearch />
 					{projects && projects.length > 0 && <AddListOrTaskPopover />}
 					<ViewModeDropdown
 						value={mode}

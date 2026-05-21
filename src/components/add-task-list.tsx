@@ -19,13 +19,19 @@ import {
 import { AddTaskDialog } from "@/features/projects/components/add-task-form";
 import CreateStatusForm from "@/features/projects/components/create-status-form";
 import CreateListForm from "@/features/projects/components/list-form";
-import type { Task } from "@/types/type";
+import { useSearch } from "@/contexts/search-context";
 
 export function AddListOrTaskPopover() {
 	const [showListDialog, setShowListDialog] = useState(false);
-	const [showTaskDialog, setShowTaskDialog] = useState(false);
 	const [showStatusDialog, setShowStatusDialog] = useState(false);
-	const [taskData, setTaskData] = useState<Task | undefined>(undefined);
+	const { showTaskDialog, selectedTaskForDialog, taskDialogType, closeTaskDialog } = useSearch();
+
+	const handleTaskDialogChange = (open: boolean) => {
+		if (!open) {
+			closeTaskDialog();
+		}
+	};
+
 	return (
 		<>
 			<DropdownMenu modal={false}>
@@ -45,7 +51,7 @@ export function AddListOrTaskPopover() {
 
 				<DropdownMenuContent className="w-40" align="end">
 					<DropdownMenuGroup>
-						<DropdownMenuItem onSelect={() => setShowTaskDialog(true)}>
+						<DropdownMenuItem onSelect={() => closeTaskDialog()}>
 							Task
 						</DropdownMenuItem>
 						<DropdownMenuItem onSelect={() => setShowListDialog(true)}>
@@ -70,9 +76,9 @@ export function AddListOrTaskPopover() {
 			/>
 			<AddTaskDialog
 				showTaskDialog={showTaskDialog}
-				setShowTaskDialog={setShowTaskDialog}
-				setTaskData={setTaskData}
-				taskData={taskData}
+				setShowTaskDialog={handleTaskDialogChange}
+				taskData={selectedTaskForDialog}
+				type={taskDialogType}
 			/>
 		</>
 	);

@@ -2,7 +2,7 @@ import { IconFolderCode } from "@tabler/icons-react";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { Edit, Loader2, Trash } from "lucide-react";
 import type React from "react";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Empty,
@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { SideBarContext } from "@/contexts/sidebar-context";
+import { useSearch } from "@/contexts/search-context";
 import { useCreatetask } from "@/features/projects/api/task";
+import { setTasks } from "@/features/auth/stores/projectSlice";
+import { useAppDispatch } from "@/hooks/useAuth";
 import DeleteTaskDialog, {
 	AddTaskDialog,
 } from "@/features/projects/components/add-task-form";
@@ -49,6 +52,9 @@ export default function Page() {
 		statuses,
 	} = useContext(SideBarContext)!;
 
+	const dispatch = useAppDispatch();
+	const { showTaskDialog: searchShowTaskDialog, selectedTaskForDialog, showTaskDetails, selectedTaskForDetails, closeTaskDetails } = useSearch();
+
 	/* ------------------ UI State ------------------ */
 	const [taskOpen, setTaskOpen] = useState(false);
 
@@ -59,6 +65,30 @@ export default function Page() {
 	const [showTaskDelete, setShowTaskDelete] = useState(false);
 	const [taskData, setTaskData] = useState<Task | undefined>(undefined);
 	const createTask = useCreatetask();
+
+	/* Sync tasks to redux for search */
+	useEffect(() => {
+		if (taskForTableState && taskForTableState.length > 0) {
+			dispatch(setTasks(taskForTableState));
+		}
+	}, [taskForTableState, dispatch]);
+
+	/* Sync search context with local state */
+	useEffect(() => {
+		if (searchShowTaskDialog && !showTaskDialog) {
+			setTaskData(selectedTaskForDialog);
+			setShowTaskDialog(true);
+		}
+	}, [searchShowTaskDialog, selectedTaskForDialog, showTaskDialog]);
+
+	/* Open task details from search */
+	useEffect(() => {
+		if (showTaskDetails && selectedTaskForDetails) {
+			setTaskData(selectedTaskForDetails);
+			setTaskOpen(true);
+			closeTaskDetails();
+		}
+	}, [showTaskDetails, selectedTaskForDetails, closeTaskDetails]);
 
 	const taskForTable: Task[] = useMemo(
 		() => taskForTableState ?? [],

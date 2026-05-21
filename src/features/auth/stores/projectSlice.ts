@@ -1,14 +1,16 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Project } from "@/types/type";
+import type { Project, Task } from "@/types/type";
 
 export interface ProjectState {
 	currentProject: Project | null;
 	projects: Project[];
+	tasks: Task[];
 }
 
 const initialState: ProjectState = {
 	currentProject: JSON.parse(localStorage.getItem("project") || "null"),
 	projects: [],
+	tasks: [],
 };
 
 const projectSlice = createSlice({
@@ -33,9 +35,20 @@ const projectSlice = createSlice({
 			state.currentProject = null;
 			localStorage.removeItem("project");
 		},
+		setTasks(state, action: PayloadAction<Task[]>) {
+			state.tasks = action.payload ?? [];
+		},
+		addTask(state, action: PayloadAction<Task>) {
+			state.tasks = [...state.tasks, action.payload];
+		},
+		updateTask(state, action: PayloadAction<Task>) {
+			state.tasks = state.tasks.map((t) =>
+				t.id === action.payload.id ? action.payload : t,
+			);
+		},
 	},
 });
 
-export const { setProject, setProjects, addProject, clearProject } =
+export const { setProject, setProjects, addProject, clearProject, setTasks, addTask, updateTask } =
 	projectSlice.actions;
 export default projectSlice.reducer;

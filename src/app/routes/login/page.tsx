@@ -50,7 +50,7 @@ export default function LoginPage() {
   };
   async function handleNavigate() {
     await toast.success("Logged in successfully");
-    await navigate("/");
+    await navigate("/team");
   }
 
   return (

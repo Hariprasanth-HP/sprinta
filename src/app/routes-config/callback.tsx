@@ -20,7 +20,7 @@ export default function AuthCallback() {
 				if (res?.data) {
 					toast.success("Google login successful");
 
-					navigate("/");
+					navigate("/team");
 				}
 
 				if (res?.error) {

@@ -17,7 +17,7 @@ export default function SignupPage() {
       return;
     }
     await toast.success("Signup successful");
-    await navigate("/");
+    await navigate("/team");
   }
   const handleGoogleSignup = async () => {
     const { error } = await supabase.auth.signInWithOAuth({

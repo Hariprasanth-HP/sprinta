@@ -1,6 +1,7 @@
 // src/AppRoutes.tsx
 import { Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import HomePage from "@/app/routes/home/page";
 import PrivacyPage from "@/app/routes/privacy/page";
 import TermsPage from "@/app/routes/terms/page";
 import AboutPage from "@/app/routes/about/page";
@@ -17,7 +18,7 @@ export default function AppRoutes() {
     <BrowserRouter basename={import.meta.env.VITE_BASE_PATH}>
       <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
         <Routes>
-          <Route path="/" element={<Navigate to="/team" replace />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />

@@ -1,6 +1,8 @@
 // src/AppRoutes.tsx
 import { Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import PrivacyPage from "@/app/routes/privacy/page";
+import TermsPage from "@/app/routes/terms/page";
 import AboutPage from "@/app/routes/about/page";
 import TeamPage from "@/app/routes/company/page";
 import LoginPage from "@/app/routes/login/page";
@@ -17,6 +19,8 @@ export default function AppRoutes() {
         <Routes>
           <Route path="/" element={<Navigate to="/team" replace />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
 
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />

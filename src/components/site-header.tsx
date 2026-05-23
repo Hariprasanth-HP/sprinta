@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -17,13 +16,13 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
 import { type Project, ViewMode, ViewModeLabel } from "@/types/type";
 import { AddListOrTaskPopover } from "./add-task-list";
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBell } from "./notification-bell";
 import ViewModeDropdown from "./view-model";
 import { GlobalSearch } from "./global-search";
+
 export function SiteHeader({
-	logout,
 	projects,
 }: {
-	logout: () => void;
 	projects: Project[];
 }) {
 	const viewMode = useAppSelector((s) => s.auth.viewMode);
@@ -105,14 +104,7 @@ export function SiteHeader({
 					/>
 					<ModeToggle />
 
-					<Button
-						variant="secondary"
-						size="sm"
-						className="hidden sm:flex"
-						onClick={logout}
-					>
-						Log Out
-					</Button>
+					<NotificationBell />
 				</div>
 			</div>
 		</header>

@@ -9,13 +9,14 @@ import React, {
 import { Route, Routes } from "react-router-dom";
 import { toast } from "sonner";
 import AppErrorBoundary from "@/app/error-boundary/error-boundary";
+import BillingPage from "@/app/routes/billing/page";
 import Page from "@/app/routes/Dashboard/page";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { NotificationDetailDialog } from "@/components/notification-detail-dialog";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SideBarContext } from "@/contexts/sidebar-context";
-import { logout } from "@/features/auth/stores/authSlice";
 import { setProject } from "@/features/auth/stores/projectSlice";
 import { useFetchlistsFromProject } from "@/features/projects/api/list";
 import {
@@ -28,7 +29,6 @@ import { useFetchtasksFromProject } from "@/features/projects/api/task";
 import { useFetchMembersForTeam } from "@/features/teams/api/member";
 import { useFetchteam } from "@/features/teams/api/team";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
 import type { AuthState } from "@/types/auth";
 // types generated from your Prisma schema (drop-in file)
 import type {
@@ -86,14 +86,6 @@ export default function ProtectedRoutes(): JSX.Element {
 		() => listForTableState ?? [],
 		[listForTableState],
 	);
-
-	// Logout helper
-	const handleLogout = useCallback(async () => {
-		const res = await supabase.auth.signOut();
-		console.log("res", res);
-		await dispatch(logout());
-		toast.info("Logged Out successfully");
-	}, [dispatch]);
 
 	// ---- Sync server projects into local projectsState ----
 	useEffect(() => {
@@ -314,8 +306,16 @@ export default function ProtectedRoutes(): JSX.Element {
 					>
 						<AppSidebar variant="inset" />
 						<SidebarInset className="m-0 ">
-							<SiteHeader logout={handleLogout} projects={projectsState} />
+							<SiteHeader projects={projectsState} />
 							<Routes>
+								<Route
+									path="/billing"
+									element={
+										<RequireAuth>
+											<BillingPage />
+										</RequireAuth>
+									}
+								/>
 								<Route
 									path="/:id"
 									element={
@@ -327,6 +327,7 @@ export default function ProtectedRoutes(): JSX.Element {
 							</Routes>
 						</SidebarInset>
 					</SidebarProvider>
+					<NotificationDetailDialog />
 				</SideBarContext.Provider>
 			</AppErrorBoundary>
 		</ThemeProvider>

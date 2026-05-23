@@ -391,7 +391,7 @@ export default function KanbanFromData({
 											{task.assignee && (
 												<Avatar className="h-6 w-6 shrink-0">
 													<AvatarFallback>
-														{task.assignee.name?.slice(0, 2)}
+														{(task.assignee.name ?? task.assignee.email).slice(0, 2)}
 													</AvatarFallback>
 												</Avatar>
 											)}

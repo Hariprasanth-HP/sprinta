@@ -14,6 +14,9 @@ interface SearchContextType {
 	showProjectDialog: boolean;
 	showTaskDetails: boolean;
 	selectedTaskForDetails: Task | undefined;
+	selectedNotificationId: number | null;
+	openNotificationDetail: (id: number) => void;
+	closeNotificationDetail: () => void;
 }
 
 const SearchContext = createContext<SearchContextType | null>(null);
@@ -25,6 +28,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 	const [showProjectDialog, setShowProjectDialog] = useState(false);
 	const [showTaskDetails, setShowTaskDetails] = useState(false);
 	const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | undefined>();
+	const [selectedNotificationId, setSelectedNotificationId] = useState<number | null>(null);
 
 	const openTaskDialog = useCallback((task?: Task, type: "create" | "edit" = "create") => {
 		setSelectedTaskForDialog(task);
@@ -55,6 +59,14 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 		setSelectedTaskForDetails(undefined);
 	}, []);
 
+	const openNotificationDetail = useCallback((id: number) => {
+		setSelectedNotificationId(id);
+	}, []);
+
+	const closeNotificationDetail = useCallback(() => {
+		setSelectedNotificationId(null);
+	}, []);
+
 	return (
 		<SearchContext.Provider
 			value={{
@@ -70,6 +82,9 @@ export function SearchProvider({ children }: { children: ReactNode }) {
 				showProjectDialog,
 				showTaskDetails,
 				selectedTaskForDetails,
+				selectedNotificationId,
+				openNotificationDetail,
+				closeNotificationDetail,
 			}}
 		>
 			{children}

@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -215,22 +216,24 @@ export function LoginForm({
 								</Button>
 							</Field>
 							<FieldDescription className="text-center">
-								Don&apos;t have an account? <a href="/signup">Sign up</a>
+								Don&apos;t have an account? <Link to="/signup">Sign up</Link>
 							</FieldDescription>
 						</FieldGroup>
 					</form>
-					<div className="bg-muted relative hidden md:block">
-						<img
-							src="/placeholder.svg"
-							alt="Image"
-							className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-						/>
+					<div className="bg-muted relative hidden md:flex flex-col items-center justify-center gap-4 p-8">
+						<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-sky-600 shadow-xl shadow-sky-500/30 ring-4 ring-sky-400/20">
+							<img src="/vite.png" alt="Sprinta" className="h-12 w-12" />
+						</div>
+						<h2 className="text-2xl font-bold">Sprinta</h2>
+						<p className="text-muted-foreground text-sm text-center max-w-xs">
+							Ship faster with your team. Plan, track, and collaborate in one place.
+						</p>
 					</div>
 				</CardContent>
 			</Card>
 			<FieldDescription className="px-6 text-center">
-				By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-				and <a href="#">Privacy Policy</a>.
+				By clicking continue, you agree to our <Link to="/terms">Terms of Service</Link>{" "}
+				and <Link to="/privacy">Privacy Policy</Link>.
 			</FieldDescription>
 		</div>
 	);

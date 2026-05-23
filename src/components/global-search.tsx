@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, ListTodo, Users, Info, X, Plus, FolderPlus } from "lucide-react";
+import { Search, FileText, ListTodo, Users, Info, X, Plus, FolderPlus, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ type SearchItem = {
 	id: string;
 	title: string;
 	description?: string;
-	type: "project" | "task" | "team" | "page" | "action";
+	type: "project" | "task" | "team" | "page" | "action" | "notification";
 	icon: React.ReactNode;
 	onClick: () => void;
 };
@@ -22,12 +22,13 @@ export function GlobalSearch() {
 	const navigate = useNavigate();
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	const { openTaskDialog, openProjectDialog, openTaskDetails } = useSearch();
+	const { openTaskDialog, openProjectDialog, openTaskDetails, openNotificationDetail } = useSearch();
 
 	const currentProject = useAppSelector((s) => s.project.currentProject);
 	const currentTeam = useAppSelector((s) => s.team.currentTeam);
 	const tasks = useAppSelector((s) => s.project.tasks ?? []);
 	const projects = useAppSelector((s) => s.project.projects ?? []);
+	const notifications = useAppSelector((s) => s.notifications.notifications ?? []);
 
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
@@ -80,6 +81,20 @@ export function GlobalSearch() {
 				icon: <ListTodo className="h-4 w-4" />,
 				onClick: () => {
 					openTaskDetails(task);
+					setOpen(false);
+				},
+			});
+		});
+
+		notifications.forEach((n) => {
+			all.push({
+				id: `notification-${n.id}`,
+				title: n.title,
+				description: n.message ?? undefined,
+				type: "notification",
+				icon: <Bell className="h-4 w-4" />,
+				onClick: () => {
+					openNotificationDetail(n.id);
 					setOpen(false);
 				},
 			});
@@ -144,7 +159,7 @@ export function GlobalSearch() {
 		);
 
 		return all;
-	}, [currentTeam, currentProject, projects, tasks, navigate, openTaskDialog, openProjectDialog, openTaskDetails]);
+	}, [currentTeam, currentProject, projects, tasks, notifications, navigate, openTaskDialog, openProjectDialog, openTaskDetails, openNotificationDetail]);
 
 	const filtered = useMemo(() => {
 		if (!query.trim()) return items;
@@ -168,6 +183,8 @@ export function GlobalSearch() {
 				return "bg-slate-500/20 text-slate-400";
 			case "action":
 				return "bg-orange-500/20 text-orange-400";
+			case "notification":
+				return "bg-rose-500/20 text-rose-400";
 		}
 	};
 

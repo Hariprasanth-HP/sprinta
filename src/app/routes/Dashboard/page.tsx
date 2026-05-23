@@ -53,7 +53,7 @@ export default function Page() {
 	} = useContext(SideBarContext)!;
 
 	const dispatch = useAppDispatch();
-	const { showTaskDialog: searchShowTaskDialog, selectedTaskForDialog, showTaskDetails, selectedTaskForDetails, closeTaskDetails } = useSearch();
+	const { showTaskDialog, selectedTaskForDialog, taskDialogType, openTaskDialog, closeTaskDialog, showTaskDetails, selectedTaskForDetails, closeTaskDetails } = useSearch();
 
 	/* ------------------ UI State ------------------ */
 	const [taskOpen, setTaskOpen] = useState(false);
@@ -61,7 +61,6 @@ export default function Page() {
 	const [subTaskOpen, setSubTaskOpen] = useState(false);
 	const [subTask, setSubTask] = useState<Task | undefined>(undefined);
 
-	const [showTaskDialog, setShowTaskDialog] = useState(false);
 	const [showTaskDelete, setShowTaskDelete] = useState(false);
 	const [taskData, setTaskData] = useState<Task | undefined>(undefined);
 	const createTask = useCreatetask();
@@ -72,14 +71,6 @@ export default function Page() {
 			dispatch(setTasks(taskForTableState));
 		}
 	}, [taskForTableState, dispatch]);
-
-	/* Sync search context with local state */
-	useEffect(() => {
-		if (searchShowTaskDialog && !showTaskDialog) {
-			setTaskData(selectedTaskForDialog);
-			setShowTaskDialog(true);
-		}
-	}, [searchShowTaskDialog, selectedTaskForDialog, showTaskDialog]);
 
 	/* Open task details from search */
 	useEffect(() => {
@@ -156,8 +147,7 @@ export default function Page() {
 								title="Edit Task"
 								onClick={(e) => {
 									e.stopPropagation();
-									setTaskData(item);
-									setShowTaskDialog(true);
+									openTaskDialog(item, "edit");
 								}}
 								className="text-primary"
 							>
@@ -299,11 +289,10 @@ export default function Page() {
 			)}
 			<AddTaskDialog
 				showTaskDialog={showTaskDialog}
-				setShowTaskDialog={setShowTaskDialog}
-				taskData={taskData}
-				setTaskData={setTaskData}
+				setShowTaskDialog={(open) => { if (!open) closeTaskDialog(); }}
+				taskData={selectedTaskForDialog}
 				setTaskForTableState={setTaskForTableState}
-				type="edit"
+				type={taskDialogType}
 			/>
 			<DrawerInfo
 				open={taskOpen}

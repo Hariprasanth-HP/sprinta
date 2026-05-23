@@ -16,7 +16,6 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AddTaskDialog } from "@/features/projects/components/add-task-form";
 import CreateStatusForm from "@/features/projects/components/create-status-form";
 import CreateListForm from "@/features/projects/components/list-form";
 import { useSearch } from "@/contexts/search-context";
@@ -24,13 +23,7 @@ import { useSearch } from "@/contexts/search-context";
 export function AddListOrTaskPopover() {
 	const [showListDialog, setShowListDialog] = useState(false);
 	const [showStatusDialog, setShowStatusDialog] = useState(false);
-	const { showTaskDialog, selectedTaskForDialog, taskDialogType, closeTaskDialog } = useSearch();
-
-	const handleTaskDialogChange = (open: boolean) => {
-		if (!open) {
-			closeTaskDialog();
-		}
-	};
+	const { openTaskDialog } = useSearch();
 
 	return (
 		<>
@@ -51,7 +44,7 @@ export function AddListOrTaskPopover() {
 
 				<DropdownMenuContent className="w-40" align="end">
 					<DropdownMenuGroup>
-						<DropdownMenuItem onSelect={() => closeTaskDialog()}>
+						<DropdownMenuItem onSelect={() => openTaskDialog(undefined, "create")}>
 							Task
 						</DropdownMenuItem>
 						<DropdownMenuItem onSelect={() => setShowListDialog(true)}>
@@ -73,12 +66,6 @@ export function AddListOrTaskPopover() {
 				setOpenDialog={setShowStatusDialog}
 				onSuccess={() => setShowStatusDialog(false)}
 				onCancel={() => setShowStatusDialog(false)}
-			/>
-			<AddTaskDialog
-				showTaskDialog={showTaskDialog}
-				setShowTaskDialog={handleTaskDialogChange}
-				taskData={selectedTaskForDialog}
-				type={taskDialogType}
 			/>
 		</>
 	);

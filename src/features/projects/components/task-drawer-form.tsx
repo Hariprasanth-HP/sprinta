@@ -424,12 +424,12 @@ export function DrawerInfo({
 												<div className="flex items-center gap-2">
 													<Avatar className="h-8 w-8">
 														<AvatarFallback>
-															{task.assignee.name.slice(0, 2)}
+															{(task.assignee.name ?? task.assignee.email).slice(0, 2)}
 														</AvatarFallback>
 													</Avatar>
 													<div className="text-sm">
 														<div className="font-medium">
-															{task.assignee.name}
+															{task.assignee.name ?? task.assignee.email}
 														</div>
 														<div className="text-xs text-muted-foreground">
 															Assignee

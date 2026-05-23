@@ -390,9 +390,9 @@ export default function AddTaskForm({
 									<SelectItem key={u.userId} value={String(u.userId)}>
 										<div className="flex items-center gap-2">
 											<Avatar className="h-5 w-5">
-												<AvatarFallback>{u.name?.slice(0, 2)}</AvatarFallback>
+												<AvatarFallback>{(u.name ?? u.email).slice(0, 2)}</AvatarFallback>
 											</Avatar>
-											<span>{u.name}</span>
+											<span>{u.name ?? u.email}</span>
 										</div>
 									</SelectItem>
 								))}

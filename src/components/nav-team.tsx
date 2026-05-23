@@ -14,6 +14,17 @@ import {
 import { useContext, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -44,11 +55,23 @@ import { clearProject } from "@/features/auth/stores/projectSlice";
 import { useCreateMembers } from "@/features/teams/api/member";
 import { ManageMembers } from "@/features/teams/components/manage-members";
 import { useAppSelector } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { logout } from "@/features/auth/stores/authSlice";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar";
 export function NavTeam() {
 	const [showTeamDialog, setShowTeamDialog] = useState(false);
+	const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 	const { team } = useContext(SideBarContext)!;
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+
+	async function handleLogout() {
+		await supabase.auth.signOut();
+		dispatch(logout());
+		toast.info("Logged out successfully");
+	}
+
 	if (!team) return null;
 	return (
 		<>
@@ -65,16 +88,12 @@ export function NavTeam() {
 								</Avatar>
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-medium">{team.name}</span>
-									{/* <span className='text-muted-foreground truncate text-xs'>
-                    {team.email}
-                  </span> */}
 								</div>
 								<IconDotsVertical className="ml-auto size-4" />
 							</SidebarMenuButton>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
 							className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-							//   side={isMobile ? "bottom" : "right"}
 							align="end"
 							sideOffset={4}
 						>
@@ -85,9 +104,6 @@ export function NavTeam() {
 									</Avatar>
 									<div className="grid flex-1 text-left text-sm leading-tight">
 										<span className="truncate font-medium">{team.name}</span>
-										{/* <span className='text-muted-foreground truncate text-xs'>
-                      {team.email}
-                    </span> */}
 									</div>
 								</div>
 							</DropdownMenuLabel>
@@ -97,13 +113,13 @@ export function NavTeam() {
 									<IconUserCircle />
 									Account
 								</DropdownMenuItem>
-								<DropdownMenuItem>
+								<DropdownMenuItem onSelect={() => navigate("/team/billing")}>
 									<IconCreditCard />
 									Billing
 								</DropdownMenuItem>
 							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem>
+							<DropdownMenuItem onSelect={() => setShowLogoutDialog(true)}>
 								<IconLogout />
 								Log out
 							</DropdownMenuItem>
@@ -119,6 +135,20 @@ export function NavTeam() {
 					<ManageTeam />
 				</DialogContent>
 			</Dialog>
+			<AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+						<AlertDialogDescription>
+							You will be redirected to the login page. Your session will be ended.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={handleLogout}>Log out</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</>
 	);
 }

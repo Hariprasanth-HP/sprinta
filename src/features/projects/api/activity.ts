@@ -12,7 +12,9 @@ export async function createActivityApi(payload: Partial<Activity>) {
 	return apiPost<{ success: boolean; data: Activity }>(`/activity`, payload);
 }
 
-export async function updateActivityApi(payload: Partial<Activity>) {
+export async function updateActivityApi(
+	payload: Partial<Activity> & { assetIds?: number[] },
+) {
 	return apiPatch<ActivityApiRes>(`/activity/${payload.id}`, payload);
 }
 
@@ -93,20 +95,27 @@ export function useFetchActivities(id?: number | string) {
 	});
 }
 
+export type CreateActivityPayload = Partial<Activity> & { assetIds?: number[] };
+
 // Create activity
 export function useCreateactivity() {
 	return useMutation({
-		mutationFn: (payload: Partial<Activity>) => createActivityApi(payload),
+		mutationFn: (payload: CreateActivityPayload) => createActivityApi(payload),
 	});
 }
+
+export type UpdateActivityPayload = Partial<Activity> & {
+	assetIds?: number[];
+};
 
 // Update activity
 export function useUpdateactivity() {
 	return useMutation({
-		mutationFn: (payload: Partial<Activity>) =>
+		mutationFn: (payload: UpdateActivityPayload) =>
 			updateActivityApi({
 				id: payload?.id,
 				description: payload?.description,
+				assetIds: payload?.assetIds,
 			}),
 	});
 }

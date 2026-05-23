@@ -201,6 +201,7 @@ export interface Activity {
 
 	parentId: string | null;
 	user?: User;
+	assets?: Asset[];
 }
 
 /* ---------------------------

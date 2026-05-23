@@ -1,9 +1,9 @@
 "use client";
 
 import type { UseMutationResult } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import FileUpload from "@/components/fileUpload";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -29,12 +29,13 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { SideBarContext } from "@/contexts/sidebar-context";
 import { useFetchactivitiesFromTask } from "@/features/projects/api/activity";
 import {
 	type TaskApiResSingle,
 	useUpdatetask,
 } from "@/features/projects/api/task";
-import type { Activity, Task, TaskStatus } from "@/types/type";
+import type { Activity, Task, TaskStatus, TeamMember } from "@/types/type";
 import ActivityComp from "./activity-section";
 import { useAppSelector } from "@/hooks/useAuth";
 
@@ -87,6 +88,7 @@ export function DrawerInfo({
 	const [subTaskDesc, setSubTaskDesc] = useState<string>("");
 	const [activities, setActivities] = useState<Activity[]>([]);
 	const fetchActivities = useFetchactivitiesFromTask();
+	const { usersList } = useContext(SideBarContext)!;
 	const statuses = useAppSelector((s) => s.statuses.statuses);
 	useEffect(() => {
 		async function fetchActivitiesFromTask() {
@@ -157,12 +159,10 @@ export function DrawerInfo({
 		}
 
 		try {
-			// assume updateTask.mutateAsync returns Promise<UpdateTaskResponse>
 			const { activity } = await updateTask.mutateAsync({
 				...patch,
 				id: task?.id,
-				assignedById: rest.userId!,
-			}); // if necessary, cast the payload to the expected payload type
+			} as Partial<Task>);
 
 			// If an activity was returned, prepend it to activities using the prev state
 			if (activity) {
@@ -333,31 +333,54 @@ export function DrawerInfo({
 		);
 	};
 
-	const InlinePerson: React.FC<{ field: keyof Task }> = ({ field }) => {
-		const current = localTask?.[field as keyof Task];
-		const value: string = String(current);
-		const [val, setVal] = React.useState<string>(value);
-		React.useEffect(() => setVal(value), [editing]);
+	const InlinePerson: React.FC = () => {
+		const { usersList } = useContext(SideBarContext)!;
+		const currentId = String(localTask.assigneeId ?? "");
+		const [val, setVal] = React.useState<string>(currentId);
+
+		React.useEffect(() => {
+			setVal(String(localTask.assigneeId ?? ""));
+		}, [editing, localTask.assigneeId]);
+
+		const selectedMember = usersList?.find((u) => String(u.userId) === val);
+
 		return (
-			<Input
-				autoFocus
+			<Select
 				value={val}
-				onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-					setVal(e.target.value)
-				}
-				onBlur={async () => {
+				onValueChange={async (v: string) => {
+					setVal(v);
 					setEditing(null);
-					if (val !== value)
+					if (!v) {
+						await applyPatch({ assigneeId: null, assignee: null } as unknown as Partial<Task>);
+						return;
+					}
+					const member = usersList?.find((u) => String(u.userId) === v);
+					if (member) {
 						await applyPatch({
-							[field]: val ? { name: val } : null,
-						} as Partial<Task>);
+							assigneeId: member.userId,
+							assignee: { id: member.userId, name: member.name ?? member.email, email: member.email },
+						} as unknown as Partial<Task>);
+					}
 				}}
-				onKeyDown={(e: React.KeyboardEvent) => {
-					if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-					if (e.key === "Escape") setEditing(null);
-				}}
-				placeholder="Type a name and blur to save"
-			/>
+			>
+				<SelectTrigger className="w-full">
+					<SelectValue placeholder="Select member">
+						{selectedMember?.name ?? selectedMember?.email ?? "Unassigned"}
+					</SelectValue>
+				</SelectTrigger>
+				<SelectContent>
+					{usersList?.map((u: TeamMember) => (
+						<SelectItem key={u.userId} value={String(u.userId)}>
+							<div className="flex items-center gap-2">
+								<Avatar className="h-5 w-5">
+									<AvatarFallback>{(u.name ?? u.email).slice(0, 2)}</AvatarFallback>
+								</Avatar>
+								<span>{u.name ?? u.email}</span>
+							</div>
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
 		);
 	};
 
@@ -396,14 +419,14 @@ export function DrawerInfo({
 			) : (
 				<Drawer open={open} dismissible={true} onOpenChange={setOpen}>
 					<DrawerContent className="!h-[95vh] !max-h-[95vh] !flex flex-col">
-						<div className="!flex h-[100%] flex-col md:flex-row overflow-hidden">
-							<div className="mx-auto w-full md:w-[60%] p-4 sm:p-6 overflow-y-auto touch-manipulation">
+						<div className="!flex h-[100%] flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+							<div className="mx-auto w-full md:w-[60%] p-4 sm:p-6 md:overflow-y-auto touch-manipulation">
 								<DrawerHeader>
 									<div className="flex items-start justify-between gap-4 w-full">
 										<div>
 											<DrawerTitle className="flex items-center gap-3">
 												<div
-													className="mt-2 rounded-md border p-2 bg-muted/5 cursor-pointer"
+													className="mt-2 rounded-md border p-2 bg-muted/5 cursor-pointer group/edit relative"
 													onDoubleClick={() => setEditing("name")}
 												>
 													{editing === "name" ? (
@@ -411,6 +434,9 @@ export function DrawerInfo({
 													) : (
 														<div className="font-medium">{localTask.name}</div>
 													)}
+													<span className="absolute -right-1 -top-1 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+														<Pencil className="h-3 w-3 text-muted-foreground" />
+													</span>
 												</div>
 												{priorityBadge(task.priority)}
 											</DrawerTitle>
@@ -420,27 +446,31 @@ export function DrawerInfo({
 										</div>
 
 										<div className="flex items-center gap-2">
-											{task.assignee ? (
-												<div className="flex items-center gap-2">
-													<Avatar className="h-8 w-8">
-														<AvatarFallback>
-															{(task.assignee.name ?? task.assignee.email).slice(0, 2)}
-														</AvatarFallback>
-													</Avatar>
-													<div className="text-sm">
-														<div className="font-medium">
-															{task.assignee.name ?? task.assignee.email}
-														</div>
-														<div className="text-xs text-muted-foreground">
-															Assignee
+											{(() => {
+												const member = localTask.assignee
+													?? usersList?.find((u) => String(u.userId) === String(localTask.assigneeId));
+												return member ? (
+													<div className="flex items-center gap-2">
+														<Avatar className="h-8 w-8">
+															<AvatarFallback>
+																{(member.name ?? member.email).slice(0, 2)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="text-sm">
+															<div className="font-medium">
+																{member.name ?? member.email}
+															</div>
+															<div className="text-xs text-muted-foreground">
+																Assignee
+															</div>
 														</div>
 													</div>
-												</div>
-											) : (
-												<div className="text-sm text-muted-foreground">
-													Unassigned
-												</div>
-											)}
+												) : (
+													<div className="text-sm text-muted-foreground">
+														Unassigned
+													</div>
+												);
+											})()}
 											<Button
 												variant="ghost"
 												title="Delete Task"
@@ -462,7 +492,7 @@ export function DrawerInfo({
 									<section>
 										<Label>Description</Label>
 										<div
-											className="mt-2 rounded-md border p-4 bg-muted/5 cursor-pointer"
+											className="mt-2 rounded-md border p-4 bg-muted/5 cursor-pointer group/edit relative"
 											onDoubleClick={() => setEditing("description")}
 										>
 											{editing === "description" ? (
@@ -472,11 +502,14 @@ export function DrawerInfo({
 													{localTask.description ?? "No description"}
 												</div>
 											)}
+											<span className="absolute top-1 right-1 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+												<Pencil className="h-3 w-3 text-muted-foreground" />
+											</span>
 										</div>
 									</section>
 
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-										<div>
+										<div className="group/edit relative">
 											<Label>Status</Label>
 											<div
 												className="mt-1"
@@ -488,9 +521,12 @@ export function DrawerInfo({
 													<div className="font-medium">{status ?? "Open"}</div>
 												)}
 											</div>
+											<span className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+												<Pencil className="h-3 w-3 text-muted-foreground" />
+											</span>
 										</div>
 
-										<div>
+										<div className="group/edit relative">
 											<Label>Priority</Label>
 											<div
 												className="mt-1"
@@ -504,9 +540,12 @@ export function DrawerInfo({
 													</div>
 												)}
 											</div>
+											<span className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+												<Pencil className="h-3 w-3 text-muted-foreground" />
+											</span>
 										</div>
 
-										<div>
+										<div className="group/edit relative">
 											<Label>Due date</Label>
 											<div
 												className="mt-1"
@@ -520,21 +559,42 @@ export function DrawerInfo({
 													</div>
 												)}
 											</div>
+											<span className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+												<Pencil className="h-3 w-3 text-muted-foreground" />
+											</span>
 										</div>
 
-										<div>
+										<div className="group/edit relative">
 											<Label>Assigned to</Label>
 											<div
 												className="mt-1"
 												onDoubleClick={() => setEditing("assignee")}
 											>
 												{editing === "assignee" ? (
-													<InlinePerson field="assignee" />
+													<InlinePerson />
 												) : (
 													<div className="font-medium">
-														{localTask.assignee?.name ?? "—"}
+														{localTask.assignee?.name
+															?? usersList?.find((u) => String(u.userId) === String(localTask.assigneeId))?.name
+															?? "—"}
 													</div>
 												)}
+											</div>
+											<span className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity">
+												<Pencil className="h-3 w-3 text-muted-foreground" />
+											</span>
+										</div>
+									</div>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+										<div>
+											<Label>Assigned by</Label>
+											<div className="mt-1">
+												<div className="font-medium">
+													{localTask.assignedBy?.name
+														?? usersList?.find((u) => String(u.userId) === String(localTask.assignedById))?.name
+														?? localTask.assignedById
+														?? "—"}
+												</div>
 											</div>
 										</div>
 									</div>
@@ -669,7 +729,7 @@ export function DrawerInfo({
 									</div>
 								</DrawerFooter>
 							</div>
-							<div className="mx-auto w-full md:w-[40%] p-4 sm:p-6 border-t md:border-t-0 md:border-l border-border overflow-y-auto touch-manipulation">
+							<div className="mx-auto w-full md:w-[40%] p-4 sm:p-6 border-t md:border-t-0 md:border-l border-border md:overflow-y-auto touch-manipulation">
 								<ActivityComp
 									activities={activities}
 									setActivities={setActivities}

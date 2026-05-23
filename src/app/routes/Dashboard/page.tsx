@@ -13,6 +13,11 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SideBarContext } from "@/contexts/sidebar-context";
 import { useSearch } from "@/contexts/search-context";
 import { useCreatetask } from "@/features/projects/api/task";
@@ -105,10 +110,25 @@ export default function Page() {
 				cell: ({ getValue }): React.ReactNode => {
 					const v = getValue() as string | null;
 
+					if (!v) {
+						return (
+							<p className="text-xs text-muted-foreground">
+								<span className="text-muted">No description</span>
+							</p>
+						);
+					}
+
 					return (
-						<p className="text-xs text-muted-foreground">
-							{v || <span className="text-muted">No description</span>}
-						</p>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<p className="text-xs text-muted-foreground truncate max-w-[200px]">
+									{v}
+								</p>
+							</TooltipTrigger>
+							<TooltipContent side="bottom" align="start" className="max-w-[400px] break-words">
+								{v}
+							</TooltipContent>
+						</Tooltip>
 					);
 				},
 			},

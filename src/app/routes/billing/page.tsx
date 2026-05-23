@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/hooks/useAuth";
-import { Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 
 const planDetails = {
 	free: {
@@ -50,12 +50,22 @@ const planDetails = {
 };
 
 export default function BillingPage() {
+	const navigate = useNavigate();
 	const plan = useAppSelector((s) => s.team.plan);
 	const current = planDetails[plan];
 
 	return (
 		<div className="p-6 max-w-2xl">
 			<div className="mb-8">
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => navigate(-1)}
+					className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+				>
+					<ArrowLeft className="h-4 w-4 mr-1" />
+					Back
+				</Button>
 				<h1 className="text-2xl font-semibold">Billing</h1>
 				<p className="text-muted-foreground text-sm mt-1">
 					Manage your subscription and billing details.

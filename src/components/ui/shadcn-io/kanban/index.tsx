@@ -26,6 +26,7 @@ import {
 	type HTMLAttributes,
 	type ReactNode,
 	useContext,
+	useEffect,
 	useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -225,6 +226,14 @@ export const KanbanProvider = <
 	...props
 }: KanbanProviderProps<T, C>) => {
 	const [activeCardId, setActiveCardId] = useState<string | null>(null);
+	const [liveData, setLiveData] = useState<T[]>(data);
+
+	// Sync from parent when not dragging
+	useEffect(() => {
+		if (!activeCardId) {
+			setLiveData(data);
+		}
+	}, [data, activeCardId]);
 
 	const sensors = useSensors(
 		useSensor(MouseSensor, {
@@ -247,7 +256,7 @@ export const KanbanProvider = <
 	);
 
 	const handleDragStart = (event: DragStartEvent) => {
-		const card = data.find((item) => item.id === event.active.id);
+		const card = liveData.find((item) => item.id === event.active.id);
 
 		if (card) {
 			setActiveCardId(event.active.id as string);
@@ -260,8 +269,8 @@ export const KanbanProvider = <
 		if (!over) {
 			return;
 		}
-		const activeItem = data.find((item) => item.id === active.id);
-		const overItem = data.find((item) => item.id === over.id);
+		const activeItem = liveData.find((item) => item.id === active.id);
+		const overItem = liveData.find((item) => item.id === over.id);
 		if (!activeItem) {
 			return;
 		}
@@ -272,12 +281,13 @@ export const KanbanProvider = <
 			columns[0]?.id;
 
 		if (activeColumn !== overColumn) {
-			let newData = [...data];
-			const activeIndex = newData.findIndex((item) => item.id === active.id);
-			const overIndex = newData.findIndex((item) => item.id === over.id);
-			newData[activeIndex].column = overColumn;
-			newData = arrayMove(newData, activeIndex, overIndex);
-			onDataChange?.(newData);
+			setLiveData((prev) => {
+				const next = [...prev];
+				const activeIndex = next.findIndex((item) => item.id === active.id);
+				const overIndex = next.findIndex((item) => item.id === over.id);
+				next[activeIndex] = { ...next[activeIndex], column: overColumn };
+				return arrayMove(next, activeIndex, overIndex);
+			});
 		}
 		onDragOver?.(event);
 	};
@@ -290,10 +300,11 @@ export const KanbanProvider = <
 		const { active, over } = event;
 
 		if (!over || active.id === over.id) {
+			setLiveData(data);
 			return;
 		}
 
-		let newData = [...data];
+		let newData = [...liveData];
 
 		const oldIndex = newData.findIndex((item) => item.id === active.id);
 		const newIndex = newData.findIndex((item) => item.id === over.id);
@@ -329,7 +340,7 @@ export const KanbanProvider = <
 	};
 
 	return (
-		<KanbanContext.Provider value={{ columns, data, activeCardId }}>
+		<KanbanContext.Provider value={{ columns, data: liveData, activeCardId }}>
 			<DndContext
 				accessibility={{ announcements }}
 				collisionDetection={closestCenter}

@@ -27,6 +27,7 @@ import {
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
+	type ColumnSizingState,
 	flexRender,
 	getCoreRowModel,
 	getExpandedRowModel,
@@ -85,6 +86,10 @@ function DragHandle({ id }: { id: number }) {
 const constructedColumns: ColumnDef<Task>[] = [
 	{
 		id: "drag",
+		size: 40,
+		minSize: 40,
+		maxSize: 40,
+		enableResizing: false,
 		header: () => null,
 		cell: ({ row }: { row: Row<Task> }) => (
 			<DragHandle id={Number(row.original.id)} />
@@ -160,6 +165,7 @@ export function DataTable<T extends Parentable>({
 		pageIndex: 0,
 		pageSize: 10,
 	});
+	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
 
 	const sortableId = React.useId();
 	const sensors = useSensors(
@@ -185,7 +191,11 @@ export function DataTable<T extends Parentable>({
 			rowSelection,
 			columnFilters,
 			pagination,
+			columnSizing,
 		},
+		enableColumnResizing: true,
+		columnResizeMode: "onChange",
+		onColumnSizingChange: setColumnSizing,
 		getRowId: (row: any) => row.id.toString(),
 		getSubRows: (row: any) => row.subTasks ?? [],
 		enableRowSelection: true,
@@ -296,19 +306,31 @@ export function DataTable<T extends Parentable>({
 						sensors={sensors}
 						id={sortableId}
 					>
-						<Table>
+						<Table className="table-fixed">
 							<TableHeader className="bg-muted sticky top-0 z-10">
 								{table.getHeaderGroups().map((headerGroup) => (
 									<TableRow key={headerGroup.id}>
 										{headerGroup.headers.map((header) => {
 											return (
-												<TableHead key={header.id} colSpan={header.colSpan}>
+												<TableHead
+													key={header.id}
+													colSpan={header.colSpan}
+													style={{ width: header.getSize() }}
+													className="relative"
+												>
 													{header.isPlaceholder
 														? null
 														: flexRender(
 															header.column.columnDef.header,
 															header.getContext(),
 														)}
+													{header.column.getCanResize() && (
+														<div
+															onMouseDown={header.getResizeHandler()}
+															onTouchStart={header.getResizeHandler()}
+															className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-sky-500 select-none"
+														/>
+													)}
 												</TableHead>
 											);
 										})}

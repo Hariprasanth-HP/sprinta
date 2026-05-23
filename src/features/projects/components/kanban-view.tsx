@@ -1,6 +1,5 @@
 "use client";
 
-import { debounce } from "lodash";
 import { Edit2Icon, PlusCircleIcon } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -235,7 +234,6 @@ export default function KanbanFromData({
 						setLocalTasks(localized);
 
 						// 2) Persist changes: find tasks whose status changed relative to previous localTasks
-						// create a map of previous statusId by numeric id
 						const prevMap = new Map<number, number | null>();
 						localTasks.forEach((lt) => {
 							const numeric = parseTaskId(lt.id);
@@ -244,56 +242,43 @@ export default function KanbanFromData({
 							prevMap.set(numeric, prevStatus);
 						});
 
-						// For each changed task, call API individually (optimistic + rollback on that single task)
+						// For each changed task, call API individually
 						for (const t of mapped) {
 							const prevStatus = prevMap.get(Number(t.id)) ?? null;
 							const newStatus = t.statusId ?? null;
 							if (prevStatus === newStatus) continue;
 
-							const debouncedUpdate = debounce(
-								async () => {
-									try {
-										const { data } = await updateTask.mutateAsync(t);
+							try {
+								const { data } = await updateTask.mutateAsync(t);
 
-										if (data) {
-											toast.success("Updated Successfully");
-											onChange?.(mapped);
-										} else {
-											console.error(
-												"[onDataChange] failed to persist task move",
-												{
-													taskId: t.id,
-												},
-											);
+								if (data) {
+									toast.success("Updated Successfully");
+									onChange?.(mapped);
+								} else {
+									console.error(
+										"[onDataChange] failed to persist task move",
+										{ taskId: t.id },
+									);
 
-											setLocalTasks((cur: LocalTask[]) =>
-												cur.map((lt) => {
-													const numeric = parseTaskId(lt.id); // number | null
+									setLocalTasks((cur: LocalTask[]) =>
+										cur.map((lt) => {
+											const numeric = parseTaskId(lt.id);
+											if (numeric === null || numeric !== t.id) return lt;
+											const newStatus =
+												prevStatus == null ? null : `status-${prevStatus}`;
+											return {
+												...lt,
+												column: newStatus,
+												statusId: newStatus,
+											} as LocalTask;
+										}),
+									);
 
-													// If this isn't the task we care about, return it unchanged
-													if (numeric === null || numeric !== t.id) return lt;
-
-													// Otherwise return a new object with updated fields
-													const newStatus =
-														prevStatus == null ? null : `status-${prevStatus}`;
-
-													return {
-														...lt,
-														column: newStatus,
-														statusId: newStatus,
-													} as LocalTask;
-												}),
-											);
-
-											alert(`Failed to move "${t.name}". Changes reverted.`);
-										}
-									} catch (e) {
-										console.error("debouncedUpdate error:", e);
-									}
-								},
-								300, // debounce time (ms)
-							);
-							debouncedUpdate();
+									alert(`Failed to move "${t.name}". Changes reverted.`);
+								}
+							} catch (e) {
+								console.error("update error:", e);
+							}
 						}
 
 						// 3) Notify parent with canonical numeric tasks (mapped)

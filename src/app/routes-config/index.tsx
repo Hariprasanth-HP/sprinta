@@ -44,6 +44,10 @@ function RouteMeta() {
     <Helmet>
       <title>{meta.title}</title>
       <meta name="description" content={meta.description} />
+      <meta property="og:title" content={meta.title} />
+      <meta property="og:description" content={meta.description} />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary" />
     </Helmet>
   );
 }

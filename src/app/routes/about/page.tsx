@@ -40,7 +40,7 @@ export default function AboutPage() {
 			<div className="mx-auto max-w-4xl px-6 py-16">
 				<div className="mb-16 text-center">
 					<div className="mb-4 inline-flex h-24 w-24 items-center justify-center rounded-full bg-white">
-						<img src="/vite.png" alt="Sprinta" className="h-12 w-12" />
+						<img src="/favicon.ico" alt="Sprinta" className="h-12 w-12" />
 					</div>
 					<h1 className="mb-4 text-4xl font-bold tracking-tight">Sprinta</h1>
 					<p className="mx-auto mb-6 max-w-2xl text-lg text-slate-400">

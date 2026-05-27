@@ -238,7 +238,7 @@ export function SignupForm({
 					</form>
 					<div className="bg-muted relative hidden md:flex flex-col items-center justify-center gap-4 p-8">
 						<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-sky-600 shadow-xl shadow-sky-500/30 ring-4 ring-sky-400/20">
-							<img src="/vite.png" alt="Sprinta" className="h-12 w-12" />
+							<img src="/favicon.ico" alt="Sprinta" className="h-12 w-12" />
 						</div>
 						<h2 className="text-2xl font-bold">Sprinta</h2>
 						<p className="text-muted-foreground text-sm text-center max-w-xs">

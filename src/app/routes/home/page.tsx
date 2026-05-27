@@ -67,7 +67,7 @@ export default function HomePage() {
 				<div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
 					<Link to="/" className="flex items-center gap-2.5">
 						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 shadow-lg shadow-sky-500/20">
-							<img src="/vite.png" alt="Sprinta" className="h-5 w-5" />
+							<img src="/favicon.ico" alt="Sprinta" className="h-5 w-5" />
 						</div>
 						<span className="text-lg font-bold">Sprinta</span>
 					</Link>
@@ -271,7 +271,7 @@ export default function HomePage() {
 						<div>
 							<Link to="/" className="flex items-center gap-2 text-sm text-slate-400 mb-3">
 								<div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-sky-700">
-									<img src="/vite.png" alt="Sprinta" className="h-4 w-4" />
+									<img src="/favicon.ico" alt="Sprinta" className="h-4 w-4" />
 								</div>
 								Sprinta
 							</Link>

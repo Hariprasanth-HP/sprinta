@@ -296,9 +296,19 @@ export function DataTable<T extends Parentable>({
 
 			<TabsContent
 				value="outline"
-				className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+				className="relative flex flex-col gap-4 px-4 lg:px-6"
 			>
-				<div className="overflow-hidden rounded-lg border">
+				<style>{`
+					.scrollbar-white::-webkit-scrollbar { width: 6px; height: 6px; }
+					.scrollbar-white::-webkit-scrollbar-track { background: transparent; }
+					.scrollbar-white::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 3px; }
+					.scrollbar-white::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.7); }
+					.scroll-container [data-slot="table-container"] { overflow: visible !important; }
+				`}</style>
+				<div
+					className="max-h-[400px] overflow-auto rounded-lg border scrollbar-white scroll-container"
+					style={{ scrollbarColor: "white transparent", scrollbarWidth: "thin" as const }}
+				>
 					<DndContext
 						collisionDetection={closestCenter}
 						modifiers={[restrictToVerticalAxis]}

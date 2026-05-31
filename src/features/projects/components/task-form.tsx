@@ -33,6 +33,28 @@ import type { SelectedColumn } from "./kanban-view";
 /** Types */
 type TaskRef = { id: number; name: string };
 
+const STORAGE_KEY = "lastTaskCreatePrefs";
+
+type TaskCreatePrefs = {
+	assigneeId: string | null;
+	projectId: number | undefined;
+	listId: number | null;
+	statusId: number | string | null;
+};
+
+function loadPrefs(): TaskCreatePrefs | null {
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY);
+		return raw ? JSON.parse(raw) : null;
+	} catch {
+		return null;
+	}
+}
+
+function savePrefs(prefs: TaskCreatePrefs) {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+}
+
 export default function AddTaskForm({
 	projects = [],
 	lists = [],
@@ -66,19 +88,42 @@ export default function AddTaskForm({
 		statuses!.length > 0 ? () => statuses?.[0] : undefined,
 	);
 	const initialFormData: Partial<Task> = useMemo(() => {
+		const lastPrefs = loadPrefs();
+
+		const validProjectId =
+			lastPrefs?.projectId && projectsState.some((p) => p.id === lastPrefs.projectId)
+				? lastPrefs.projectId
+				: (selectedProject?.id ?? undefined);
+
+		const validAssigneeId =
+			lastPrefs?.assigneeId && usersList?.some((u) => u.userId === lastPrefs.assigneeId)
+				? lastPrefs.assigneeId
+				: null;
+
+		const validStatusId =
+			status?.id ??
+			(lastPrefs?.statusId && statuses?.some((s) => s.id === Number(lastPrefs.statusId))
+				? lastPrefs.statusId
+				: (selectedStatusId?.id ?? null));
+
+		const validListId =
+			lastPrefs?.listId && listState?.some((l) => l.id === lastPrefs.listId)
+				? lastPrefs.listId
+				: null;
+
 		return {
 			name: "",
 			description: null,
 			priority: Priority.MEDIUM,
 			dueDate: null,
 			parentTaskId: null,
-			projectId: selectedProject?.id ?? undefined,
-			listId: null,
+			projectId: validProjectId,
+			listId: validListId,
 			assignedById: auth?.user?.id ?? null,
-			assigneeId: null,
-			statusId: status?.id ?? selectedStatusId?.id ?? null,
+			assigneeId: validAssigneeId,
+			statusId: validStatusId,
 		};
-	}, [selectedProject?.id, auth?.user?.id, selectedStatusId?.id, status]);
+	}, [selectedProject?.id, auth?.user?.id, selectedStatusId?.id, status, projectsState, usersList, statuses, listState]);
 	const fetchList = useFetchlistsFromProject();
 	const [formData, setFormData] = useState<Partial<Task> | undefined>(
 		taskData && Object.keys(taskData!).length > 0
@@ -148,6 +193,12 @@ export default function AddTaskForm({
 			} else {
 				const { data } = await createTask.mutateAsync(payload);
 				if (data) {
+					savePrefs({
+						assigneeId: payload.assigneeId ?? null,
+						projectId: payload.projectId ?? undefined,
+						listId: payload.listId ?? null,
+						statusId: payload.statusId ?? null,
+					});
 					toast.success("Task created");
 					setTaskForTableState((prev) => [...prev, data]);
 					setFormData(initialFormData);

@@ -17,6 +17,22 @@ type GenericSuccess = { success: boolean };
 /* --- API helpers (tiny wrappers) --- */
 /* adjust paths to match your server routes */
 
+export type TaskCursorRes = {
+	success: boolean;
+	data: Task[];
+	meta: { nextCursor?: number; limit: number };
+};
+
+export async function getTaskFromProjectWithCursorApi(
+	projectId: number,
+	cursor?: number,
+	limit = 50,
+) {
+	let path = `/task?projectId=${projectId}&limit=${limit}`;
+	if (cursor) path += `&cursor=${cursor}`;
+	return apiGet<TaskCursorRes>(path);
+}
+
 export async function createTaskApi(payload: Partial<Task>) {
 	return apiPost<TaskApiResSingle>(`/task`, payload);
 }

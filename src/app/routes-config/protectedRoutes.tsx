@@ -176,7 +176,6 @@ export default function ProtectedRoutes(): JSX.Element {
 
 		async function loadProjectData(project?: Project) {
 			if (!project?.id) {
-				// clear UI data when there's no selected project
 				setTaskForTableState([]);
 				setListForTableState([]);
 				return;
@@ -211,7 +210,6 @@ export default function ProtectedRoutes(): JSX.Element {
 		return () => {
 			mounted = false;
 		};
-		// include selectedProject.id so effect re-runs when project changed
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedProject?.id]);
 

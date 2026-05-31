@@ -4,6 +4,7 @@ import { Edit, Loader2, Trash } from "lucide-react";
 import type React from "react";
 import { useContext, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadMore } from "@/components/ui/pagination";
 import {
 	Empty,
 	EmptyContent,
@@ -90,6 +91,13 @@ export default function Page() {
 		() => taskForTableState ?? [],
 		[taskForTableState],
 	);
+
+	const [visibleTaskCount, setVisibleTaskCount] = useState(50);
+	const paginatedTasks = useMemo(
+		() => taskForTable.slice(0, visibleTaskCount),
+		[taskForTable, visibleTaskCount],
+	);
+	const hasMoreTasks = visibleTaskCount < taskForTable.length;
 
 	/* -----------------------------------------------------
    📌 Table Columns
@@ -184,7 +192,7 @@ export default function Page() {
 									setShowTaskDelete(true);
 								}}
 								className="text-destructive"
-								disabled={item?.parentTaskId ? false : item?.subTasks?.length !== 0}
+								disabled={item?.parentTaskId ? false : (item?.subTasks?.length ?? 0) > 0}
 							>
 								<Trash className="h-4 w-4" />
 							</Button>
@@ -260,18 +268,23 @@ export default function Page() {
 	console.log("taskForTable", taskForTable);
 
 	return (
-		<>
+		<div className="overflow-y-auto flex-1 min-h-0">
 			{auth.viewMode === ViewMode.KANBAN ? (
 				<>
 					<KanbanFromData
 						statuses={statuses}
-						tasks={taskForTable}
+						tasks={paginatedTasks ?? []}
 						onChange={handleChange}
 						open={taskOpen}
 						task={taskData}
 						setTask={setTaskData}
 						setOpen={setTaskOpen}
 						setTaskForTableState={setTaskForTableState}
+					/>
+					<LoadMore
+						onLoadMore={() => setVisibleTaskCount((c) => c + 50)}
+						hasMore={hasMoreTasks}
+						label="Show more tasks"
 					/>
 				</>
 			) : (
@@ -280,14 +293,14 @@ export default function Page() {
 						{/* Untitled List Group */}
 						<Input value="Untitled List" readOnly />
 						<DataTable
-							data={taskForTable.filter((t) => !t.listId)}
+							data={paginatedTasks.filter((t) => !t.listId)}
 							columns={columns}
 							onRowClick={handleRowClick}
 						/>
 
 						{/* Project Lists */}
 						{listForTable?.map((list: List) => {
-							const listTasks = taskForTable.filter(
+							const listTasks = paginatedTasks.filter(
 								(t) => t.listId === list.id,
 							);
 
@@ -302,6 +315,11 @@ export default function Page() {
 								</div>
 							);
 						})}
+						<LoadMore
+							onLoadMore={() => setVisibleTaskCount((c) => c + 50)}
+							hasMore={hasMoreTasks}
+							label="Show more tasks"
+						/>
 					</div>
 
 					{/* Drawer / Dialogs */}
@@ -341,6 +359,6 @@ export default function Page() {
 				setTaskForTableState={setTaskForTableState}
 				setTaskOpen={setTaskOpen}
 			/>
-		</>
+		</div>
 	);
 }

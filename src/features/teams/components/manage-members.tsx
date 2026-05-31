@@ -4,7 +4,9 @@ import clsx from "clsx";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageNav } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
+import { usePagination } from "@/hooks/usePagination";
 import {
 	Dialog,
 	DialogContent,
@@ -57,6 +59,16 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 	useEffect(() => {
 		setMembers(initialMembers);
 	}, [initialMembers]);
+
+	const {
+		paginatedData: paginatedMembers,
+		page,
+		totalPages,
+		nextPage,
+		prevPage,
+		canNextPage,
+		canPrevPage,
+	} = usePagination({ data: members ?? [], pageSize: 10 });
 
 	async function handleDelete(member: TeamMember) {
 		const confirmMsg = `Remove ${member.name ?? member.email}?`;
@@ -125,7 +137,7 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 				</div>
 			) : (
 				<div className="space-y-3">
-					{members.map((m) => (
+					{(paginatedMembers ?? []).map((m) => (
 						<div
 							key={m.id}
 							className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card rounded-xl border hover:border-slate-600 transition-colors"
@@ -201,6 +213,14 @@ export default function TeamMembersList({ initialMembers = [] }: Props) {
 					))}
 				</div>
 			)}
+			<PageNav
+				page={page}
+				totalPages={totalPages}
+				onPrev={prevPage}
+				onNext={nextPage}
+				canPrev={canPrevPage}
+				canNext={canNextPage}
+			/>
 
 			<Dialog open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
 				<DialogContent className="sm:max-w-[400px] overflow-auto">

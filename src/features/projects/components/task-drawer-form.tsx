@@ -5,7 +5,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import FileUpload from "@/components/fileUpload";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -705,12 +704,6 @@ export function DrawerInfo({
 										</section>
 									)}
 								</div>
-								<Separator />
-
-								<section className="mt-4">
-									<Label>Attachments</Label>
-									<FileUpload task={task} setTask={setTask} />
-								</section>
 								<DrawerFooter>
 									<div className="flex items-center gap-2 ml-auto">
 										{onEdit && (

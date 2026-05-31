@@ -1,5 +1,5 @@
 import { Bell, BellRing, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -17,7 +17,9 @@ import {
 	addNotification,
 } from "@/features/notifications/stores/notificationSlice";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAuth";
+import { LoadMore } from "@/components/ui/pagination";
 import { useSearch } from "@/contexts/search-context";
+import { usePagination } from "@/hooks/usePagination";
 import { initSocket } from "@/lib/socket";
 import type { Notification } from "@/types/notification";
 import { NotificationItem } from "./notification-item";
@@ -25,23 +27,45 @@ import { NotificationItem } from "./notification-item";
 export function NotificationBell() {
 	const { openNotificationDetail } = useSearch();
 	const dispatch = useAppDispatch();
-	const { notifications, unreadCount, loading } = useAppSelector(
+	const { notifications, unreadCount, totalPages, loading } = useAppSelector(
 		(s) => s.notifications,
 	);
 	const user = useAppSelector((s) => s.auth.user);
 	const [open, setOpen] = useState(false);
 	const [tab, setTab] = useState("all");
 
+	const {
+		page,
+		hasMore,
+		setPage,
+		reset: resetPage,
+	} = usePagination({ pageSize: 20, totalPages });
+
+	const currentFilter = useCallback(
+		(p: number) => ({
+			page: p,
+			limit: 20,
+			isRead:
+				tab === "all"
+					? undefined
+					: tab === "unread"
+						? false
+						: true,
+		}),
+		[tab],
+	);
+
 	useEffect(() => {
 		if (open) {
-			dispatch(fetchNotifications({}));
+			resetPage();
+			dispatch(fetchNotifications(currentFilter(1)));
 		}
-	}, [open, dispatch]);
+	}, [open, dispatch, resetPage, currentFilter]);
 
 	useEffect(() => {
 		if (!user?.id) return;
 		dispatch(fetchUnreadCount());
-		dispatch(fetchNotifications({ limit: 50 }));
+		dispatch(fetchNotifications(currentFilter(1)));
 
 		const socket = initSocket(user.id);
 
@@ -52,7 +76,20 @@ export function NotificationBell() {
 		return () => {
 			socket.off("notification");
 		};
-	}, [user?.id, dispatch]);
+	}, [user?.id, dispatch, currentFilter]);
+
+	useEffect(() => {
+		resetPage();
+		if (open) {
+			dispatch(fetchNotifications(currentFilter(1)));
+		}
+	}, [tab, resetPage, open, dispatch, currentFilter]);
+
+	const handleLoadMore = useCallback(() => {
+		const nextPage = page + 1;
+		setPage(nextPage);
+		dispatch(fetchNotifications(currentFilter(nextPage)));
+	}, [page, setPage, dispatch, currentFilter]);
 
 	const filtered = useMemo(() => {
 		if (tab === "unread") return notifications.filter((n) => !n.isRead);
@@ -147,13 +184,21 @@ export function NotificationBell() {
 								<p className="text-sm">No notifications</p>
 							</div>
 						) : (
-							filtered.map((n) => (
-								<NotificationItem
-									key={n.id}
-									notification={n}
-									onClick={() => handleNotificationClick(n)}
+							<>
+								{filtered.map((n) => (
+									<NotificationItem
+										key={n.id}
+										notification={n}
+										onClick={() => handleNotificationClick(n)}
+									/>
+								))}
+								<LoadMore
+									onLoadMore={handleLoadMore}
+									loading={loading}
+									hasMore={hasMore}
+									label="Load older notifications"
 								/>
-							))
+							</>
 						)}
 					</div>
 				</Tabs>

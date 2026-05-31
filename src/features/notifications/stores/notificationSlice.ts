@@ -14,6 +14,7 @@ interface NotificationState {
 	unreadCount: number;
 	loading: boolean;
 	error: string | null;
+	totalPages: number;
 }
 
 const initialState: NotificationState = {
@@ -21,6 +22,7 @@ const initialState: NotificationState = {
 	unreadCount: 0,
 	loading: false,
 	error: null,
+	totalPages: 1,
 };
 
 export const fetchNotifications = createAsyncThunk(
@@ -92,7 +94,17 @@ const notificationSlice = createSlice({
 			})
 			.addCase(fetchNotifications.fulfilled, (state, action) => {
 				state.loading = false;
-				state.notifications = action.payload.data;
+				const { page } = action.meta.arg;
+				if (page && page > 1) {
+					const existingIds = new Set(state.notifications.map((n) => n.id));
+					const newOnes = action.payload.data.filter(
+						(n) => !existingIds.has(n.id),
+					);
+					state.notifications = [...state.notifications, ...newOnes];
+				} else {
+					state.notifications = action.payload.data;
+				}
+				state.totalPages = action.payload.meta.totalPages;
 			})
 			.addCase(fetchNotifications.rejected, (state, action) => {
 				state.loading = false;

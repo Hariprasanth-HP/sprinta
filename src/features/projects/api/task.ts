@@ -112,7 +112,7 @@ export function useUpdatetask() {
 
 /* Rebalance task sort orders */
 export async function rebalanceTasksApi(projectId: number, parentTaskId?: number | null) {
-	return apiPost("/task/rebalance", { projectId, parentTaskId });
+	return apiPost<{ success: boolean; message?: string }>("/task/rebalance", { projectId, parentTaskId });
 }
 
 export function useRebalancetasks() {

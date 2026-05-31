@@ -131,6 +131,7 @@ export interface Task {
 	priority: Priority;
 	dueDate: ISODateString | null;
 
+	sortOrder: number;
 	parentTaskId: number | null;
 	projectId: number;
 	listId: number | null;

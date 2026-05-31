@@ -2,7 +2,7 @@ import { IconFolderCode, IconGripVertical } from "@tabler/icons-react";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Edit, Loader2, Trash } from "lucide-react";
 import React from "react";
-import { useContext, useMemo, useState, useEffect, useCallback } from "react";
+import { useContext, useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "../../../components/ui/button";
 import {
   Empty,
@@ -20,7 +20,7 @@ import {
 } from "../../../components/ui/tooltip";
 import { SideBarContext } from "../../../contexts/sidebar-context";
 import { useSearch } from "../../../contexts/search-context";
-import { useCreatetask } from "../../../features/projects/api/task";
+import { useCreatetask, useRebalancetasks, useUpdatetask } from "../../../features/projects/api/task";
 import { setTasks } from "../../../features/auth/stores/projectSlice";
 import { useAppDispatch } from "../../../hooks/useAuth";
 import DeleteTaskDialog, {
@@ -132,31 +132,82 @@ export default function Page() {
     }
   }, []);
 
+  const updateTask = useUpdatetask();
+  const rebalanceTasks = useRebalancetasks();
+  const taskForTableStateRef = useRef(taskForTableState);
+  taskForTableStateRef.current = taskForTableState;
+
+  const SORT_GAP = 100000;
+
   const handleMove = useCallback((sourceId: string | number, targetId: string | number, position: "before" | "after" | "inside") => {
-    setTaskForTableState((prev: Task[]) => {
-      const sid = Number(sourceId);
-      const tid = Number(targetId);
-      if (sid === tid) return prev;
+    const tasks = taskForTableStateRef.current;
+    const sid = Number(sourceId);
+    const tid = Number(targetId);
+    if (sid === tid) return;
 
-      const removeResult = removeTaskFromTree(prev, sid);
-      if (!removeResult) return prev;
-      const { removed, updated: afterRemove } = removeResult;
+    const removeResult = removeTaskFromTree(tasks, sid);
+    if (!removeResult) return;
+    const { removed, updated: afterRemove } = removeResult;
 
-      const targetPath = findTaskPath(afterRemove, tid);
-      if (!targetPath) return prev;
+    const targetPath = findTaskPath(afterRemove, tid);
+    if (!targetPath) return;
+    const { parent: targetParent, idx: targetIdx } = targetPath;
 
-      const { parent: targetParent, idx: targetIdx } = targetPath;
+    const targetTask = findTaskInTree(afterRemove, tid);
+    let newParentTaskId: number | null;
+    let insertParentId: number | null;
+    let insertIdx: number;
 
-      // If target has no subtasks, drop creates a child relationship
-      const targetTask = findTaskInTree(afterRemove, tid);
-      if (targetTask && (!targetTask.subTasks || targetTask.subTasks.length === 0)) {
-        return insertIntoTree(afterRemove, tid, removed, 9999);
+    if (targetTask && (!targetTask.subTasks || targetTask.subTasks.length === 0)) {
+      newParentTaskId = tid;
+      insertParentId = tid;
+      insertIdx = 0;
+    } else {
+      newParentTaskId = targetParent ? Number(targetParent.id) : null;
+      insertParentId = targetParent ? Number(targetParent.id) : null;
+      insertIdx = position === "before" ? targetIdx : targetIdx + 1;
+    }
+
+    const newTree = insertIntoTree(afterRemove, insertParentId, removed, insertIdx);
+
+    // Update local state
+    setTaskForTableState(newTree);
+
+    // Compute sortOrder from neighbors in new tree
+    const parentTasks: Task[] = insertParentId === null
+      ? newTree
+      : (findTaskInTree(newTree, insertParentId)?.subTasks ?? []);
+
+    const movedIdx = parentTasks.findIndex(t => t.id === sid);
+    if (movedIdx === -1) return;
+
+    const prevTask = movedIdx > 0 ? parentTasks[movedIdx - 1] : null;
+    const nextTask = movedIdx < parentTasks.length - 1 ? parentTasks[movedIdx + 1] : null;
+
+    let newSortOrder: number;
+    let needsRebalance = false;
+
+    if (!prevTask && !nextTask) {
+      newSortOrder = SORT_GAP;
+    } else if (!prevTask && nextTask) {
+      newSortOrder = nextTask.sortOrder / 2;
+    } else if (prevTask && !nextTask) {
+      newSortOrder = prevTask.sortOrder + SORT_GAP;
+    } else {
+      newSortOrder = (prevTask!.sortOrder + nextTask!.sortOrder) / 2;
+      if (nextTask!.sortOrder - prevTask!.sortOrder <= 1) {
+        needsRebalance = true;
       }
+    }
 
-      const insertAt = position === "before" ? targetIdx : targetIdx + 1;
-      return insertIntoTree(afterRemove, targetParent ? Number(targetParent.id) : null, removed, insertAt);
-    });
-  }, []);
+    // Persist moved task
+    updateTask.mutateAsync({ id: sid, parentTaskId: newParentTaskId, sortOrder: newSortOrder }).catch(console.error);
+
+    // Rebalance if gap is too tight
+    if (needsRebalance) {
+      rebalanceTasks.mutateAsync({ projectId: removed.projectId, parentTaskId: newParentTaskId }).catch(console.error);
+    }
+  }, [updateTask, rebalanceTasks]);
 
   const handleToggleExpand = useCallback((rowId: string) => {
     setTableState(prev => ({

@@ -110,6 +110,21 @@ export function useUpdatetask() {
 	});
 }
 
+/* Rebalance task sort orders */
+export async function rebalanceTasksApi(projectId: number, parentTaskId?: number | null) {
+	return apiPost("/task/rebalance", { projectId, parentTaskId });
+}
+
+export function useRebalancetasks() {
+	return useMutation<
+		{ success: boolean; message?: string },
+		Error,
+		{ projectId: number; parentTaskId?: number | null }
+	>({
+		mutationFn: (payload) => rebalanceTasksApi(payload.projectId, payload.parentTaskId),
+	});
+}
+
 /* Delete task */
 export function useDeletetask() {
 	return useMutation<

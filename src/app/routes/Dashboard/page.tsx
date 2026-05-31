@@ -1,38 +1,39 @@
-import { IconFolderCode } from "@tabler/icons-react";
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import { IconFolderCode, IconGripVertical } from "@tabler/icons-react";
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Edit, Loader2, Trash } from "lucide-react";
-import type React from "react";
-import { useContext, useMemo, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { LoadMore } from "@/components/ui/pagination";
+import React from "react";
+import { useContext, useMemo, useState, useEffect, useCallback } from "react";
+import { Button } from "../../../components/ui/button";
 import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "../../../components/ui/empty";
+import { Input } from "../../../components/ui/input";
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { SideBarContext } from "@/contexts/sidebar-context";
-import { useSearch } from "@/contexts/search-context";
-import { useCreatetask } from "@/features/projects/api/task";
-import { setTasks } from "@/features/auth/stores/projectSlice";
-import { useAppDispatch } from "@/hooks/useAuth";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../../../components/ui/tooltip";
+import { SideBarContext } from "../../../contexts/sidebar-context";
+import { useSearch } from "../../../contexts/search-context";
+import { useCreatetask } from "../../../features/projects/api/task";
+import { setTasks } from "../../../features/auth/stores/projectSlice";
+import { useAppDispatch } from "../../../hooks/useAuth";
 import DeleteTaskDialog, {
-	AddTaskDialog,
-} from "@/features/projects/components/add-task-form";
-import { DataTable } from "@/features/projects/components/data-table";
-import KanbanFromData from "@/features/projects/components/kanban-view";
-import { ProjectDialog } from "@/features/projects/components/project-form";
-import { DrawerInfo } from "@/features/projects/components/task-drawer-form";
-import { useAppSelector } from "@/hooks/useAuth";
-import { type Task, ViewMode } from "@/types/type";
+  AddTaskDialog,
+} from "../../../features/projects/components/add-task-form";
+import { DataTable, type TableState } from "../../../features/projects/components/data-table";
+import KanbanFromData from "../../../features/projects/components/kanban-view";
+import { ProjectDialog } from "../../../features/projects/components/project-form";
+import { DrawerInfo } from "../../../features/projects/components/task-drawer-form";
+import { useAppSelector } from "../../../hooks/useAuth";
+import { type Task, ViewMode } from "../../../types/type";
+
+const EMPTY_ARRAY: Task[] = [];
 
 export interface List {
 	id: number;
@@ -44,184 +45,336 @@ export interface List {
 ----------------------------------------------------- */
 
 export default function Page() {
-	const auth = useAppSelector((s: any) => s.auth);
+  const auth = useAppSelector((s: any) => s.auth);
 
-	const {
-		setTaskForTableState,
-		projectsState,
-		listForTable,
-		handleCreateProject,
-		refetchProject,
-		taskForTableState,
-		selectedProject,
-		isLoading,
-		statuses,
-	} = useContext(SideBarContext)!;
+  const {
+    setTaskForTableState,
+    projectsState,
+    listForTable,
+    handleCreateProject,
+    refetchProject,
+    taskForTableState,
+    selectedProject,
+    isLoading,
+    statuses,
+  } = useContext(SideBarContext)!;
 
-	const dispatch = useAppDispatch();
-	const { showTaskDialog, selectedTaskForDialog, taskDialogType, openTaskDialog, closeTaskDialog, showTaskDetails, selectedTaskForDetails, closeTaskDetails } = useSearch();
+  const dispatch = useAppDispatch();
+  const { showTaskDialog, selectedTaskForDialog, taskDialogType, openTaskDialog, closeTaskDialog, showTaskDetails, selectedTaskForDetails, closeTaskDetails } = useSearch();
 
-	/* ------------------ UI State ------------------ */
-	const [taskOpen, setTaskOpen] = useState(false);
+  /* ------------------ UI State ------------------ */
+  const [taskOpen, setTaskOpen] = useState(false);
 
-	const [subTaskOpen, setSubTaskOpen] = useState(false);
-	const [subTask, setSubTask] = useState<Task | undefined>(undefined);
+  const [subTaskOpen, setSubTaskOpen] = useState(false);
+  const [subTask, setSubTask] = useState<Task | undefined>(undefined);
 
-	const [showTaskDelete, setShowTaskDelete] = useState(false);
-	const [taskData, setTaskData] = useState<Task | undefined>(undefined);
-	const createTask = useCreatetask();
+  const [showTaskDelete, setShowTaskDelete] = useState(false);
+  const [taskData, setTaskData] = useState<Task | undefined>(undefined);
+  const createTask = useCreatetask();
 
-	/* Sync tasks to redux for search */
-	useEffect(() => {
-		if (taskForTableState && taskForTableState.length > 0) {
-			dispatch(setTasks(taskForTableState));
-		}
-	}, [taskForTableState, dispatch]);
+  /* Sync tasks to redux for search */
+  useEffect(() => {
+    if (taskForTableState && taskForTableState.length > 0) {
+      dispatch(setTasks(taskForTableState));
+    }
+  }, [taskForTableState, dispatch]);
 
-	/* Open task details from search */
-	useEffect(() => {
-		if (showTaskDetails && selectedTaskForDetails) {
-			setTaskData(selectedTaskForDetails);
-			setTaskOpen(true);
-			closeTaskDetails();
-		}
-	}, [showTaskDetails, selectedTaskForDetails, closeTaskDetails]);
+  /* Open task details from search */
+  useEffect(() => {
+    if (showTaskDetails && selectedTaskForDetails) {
+      setTaskData(selectedTaskForDetails);
+      setTaskOpen(true);
+      closeTaskDetails();
+    }
+  }, [showTaskDetails, selectedTaskForDetails, closeTaskDetails]);
 
-	const taskForTable: Task[] = useMemo(
-		() => taskForTableState ?? [],
-		[taskForTableState],
-	);
+  /* Table State Management */
+  const [tableState, setTableState] = useState<TableState>({
+    sorting: undefined,
+    columnWidths: {},
+    expandedRows: {},
+    pagination: {
+      pageIndex: 0,
+      pageSize: 50
+    }
+  });
 
-	const [visibleTaskCount, setVisibleTaskCount] = useState(50);
-	const paginatedTasks = useMemo(
-		() => taskForTable.slice(0, visibleTaskCount),
-		[taskForTable, visibleTaskCount],
-	);
-	const hasMoreTasks = visibleTaskCount < taskForTable.length;
+  /* Get root tasks (tasks without listId) */
+  const rootTasks = useMemo(() => {
+    return (taskForTableState ?? []).filter((task) => !task.listId);
+  }, [taskForTableState]);
 
-	/* -----------------------------------------------------
-   📌 Table Columns
-  ----------------------------------------------------- */
+  /* Pre-compute list tasks for stable data references */
+  const listTasksMap = useMemo(() => {
+    const map: Record<number, Task[]> = {};
+    for (const t of taskForTableState ?? []) {
+      if (t.listId) {
+        if (!map[t.listId]) map[t.listId] = [];
+        map[t.listId].push(t);
+      }
+    }
+    return map;
+  }, [taskForTableState]);
 
-	const columns = useMemo<ColumnDef<Task>[]>(() => {
-		return [
-			{
-				accessorKey: "name",
-				header: "Name",
-				cell: ({ getValue }) => (
-					<span className="font-medium">{getValue() as string}</span>
-				),
-			},
-			{
-				accessorKey: "description",
-				header: "Description",
-				cell: ({ getValue }): React.ReactNode => {
-					const v = getValue() as string | null;
+  /* Calculate total root tasks for pagination */
+  // totalRootTasks = rootTasks.length;
 
-					if (!v) {
-						return (
-							<p className="text-xs text-muted-foreground">
-								<span className="text-muted">No description</span>
-							</p>
-						);
-					}
+  const getRowId = useCallback((row: Task) => row.id, []);
+  const getChildren = useCallback((row: Task) => row.subTasks ?? EMPTY_ARRAY, []);
 
-					return (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<p className="text-xs text-muted-foreground truncate max-w-[200px]">
-									{v}
-								</p>
-							</TooltipTrigger>
-							<TooltipContent side="bottom" align="start" className="max-w-[400px] break-words">
-								{v}
-							</TooltipContent>
-						</Tooltip>
-					);
-				},
-			},
-			{
-				accessorKey: "creator",
-				header: "Creator",
-				cell: ({ getValue }) => getValue() ?? "—",
-			},
-			{
-				accessorKey: "priority",
-				header: "Priority",
-				cell: ({ getValue }) => (
-					<span className="uppercase text-sm font-semibold">
-						{(getValue() as string) ?? "UNKNOWN"}
-					</span>
-				),
-			},
-			{
-				accessorKey: "dueDate",
-				header: "Due",
-				cell: ({ getValue }) => {
-					const v = getValue() as string | null;
-					return v ? new Date(v).toLocaleDateString() : "—";
-				},
-			},
-			{
-				id: "actions",
-				header: "Actions",
-				cell: ({ row }) => {
-					const item = row.original as Task | undefined;
-					return (
-						<div className="flex items-center gap-2">
-							<Button
-								variant="ghost"
-								size="sm"
-								title="Edit Task"
-								onClick={(e) => {
-									e.stopPropagation();
-									openTaskDialog(item, "edit");
-								}}
-								className="text-primary"
-							>
-								<Edit className="h-4 w-4" />
-							</Button>
+  const handleExpand = useCallback(async (row: Task) => {
+    // For now, we're assuming all data is already loaded
+    // In a real implementation, this would fetch children for the row
+    if (!row.subTasks && row.id) {
+      // This would normally be an API call
+      // For now, we'll just log that we would load children
+      console.log("Would load children for task:", row.id);
+    }
+  }, []);
 
-							<Button
-								variant="ghost"
-								size="sm"
-								title="Delete Task"
-								onClick={(e) => {
-									e.stopPropagation();
-									setTaskData(item);
-									setShowTaskDelete(true);
-								}}
-								className="text-destructive"
-								disabled={item?.parentTaskId ? false : (item?.subTasks?.length ?? 0) > 0}
-							>
-								<Trash className="h-4 w-4" />
-							</Button>
-						</div>
-					);
-				},
-			},
-		];
-	}, []);
+  const handleMove = useCallback((sourceId: string | number, targetId: string | number, position: "before" | "after" | "inside") => {
+    setTaskForTableState((prev: Task[]) => {
+      const sid = Number(sourceId);
+      const tid = Number(targetId);
+      if (sid === tid) return prev;
 
-	/* -----------------------------------------------------
-   📌 Handlers
-  ----------------------------------------------------- */
+      const removeResult = removeTaskFromTree(prev, sid);
+      if (!removeResult) return prev;
+      const { removed, updated: afterRemove } = removeResult;
 
-	function handleRowClick(_event: unknown, row: Row<Task>) {
-		setTaskData(row.original as Task);
-		setTaskOpen(true);
-	}
+      const targetPath = findTaskPath(afterRemove, tid);
+      if (!targetPath) return prev;
 
-	function handleSubTaskClick(st: Task) {
-		setSubTask(st);
-		setSubTaskOpen(true);
-	}
+      const { parent: targetParent, idx: targetIdx } = targetPath;
 
-	/* -----------------------------------------------------
+      // If target has no subtasks, drop creates a child relationship
+      const targetTask = findTaskInTree(afterRemove, tid);
+      if (targetTask && (!targetTask.subTasks || targetTask.subTasks.length === 0)) {
+        return insertIntoTree(afterRemove, tid, removed, 9999);
+      }
+
+      const insertAt = position === "before" ? targetIdx : targetIdx + 1;
+      return insertIntoTree(afterRemove, targetParent ? Number(targetParent.id) : null, removed, insertAt);
+    });
+  }, []);
+
+  const handleToggleExpand = useCallback((rowId: string) => {
+    setTableState(prev => ({
+      ...prev,
+      expandedRows: {
+        ...prev.expandedRows,
+        [rowId]: !prev.expandedRows[rowId],
+      },
+    }));
+  }, []);
+
+  const handleSortingChange = useCallback((sorting: SortingState) => {
+    setTableState(prev => ({ ...prev, sorting }));
+  }, []);
+
+  const handlePaginationChange = useCallback((pagination: { pageIndex: number; pageSize: number }) => {
+    setTableState(prev => ({ ...prev, pagination }));
+  }, []);
+
+  const handleColumnResize = useCallback((sizing: Record<string, number>) => {
+    setTableState(prev => ({ ...prev, columnWidths: sizing }));
+  }, []);
+
+  const handleRowClick = useCallback((_e: unknown, row: any) => {
+    const item = row.original as Task;
+    if (!item) return;
+    setTaskData(item);
+    setTaskOpen(true);
+  }, []);
+
+/* ---------- Recursive tree helpers ---------- */
+
+function removeTaskFromTree(tasks: Task[], id: number): { removed: Task; updated: Task[] } | null {
+  const idx = tasks.findIndex((t) => t.id === id);
+  if (idx !== -1) {
+    return { removed: tasks[idx], updated: [...tasks.slice(0, idx), ...tasks.slice(idx + 1)] };
+  }
+  for (let i = 0; i < tasks.length; i++) {
+    const sub = tasks[i].subTasks;
+    if (sub && sub.length > 0) {
+      const result = removeTaskFromTree(sub, id);
+      if (result) {
+        const updated = { ...tasks[i], subTasks: result.updated };
+        return { removed: result.removed, updated: [...tasks.slice(0, i), updated, ...tasks.slice(i + 1)] };
+      }
+    }
+  }
+  return null;
+}
+
+function findTaskPath(tasks: Task[], id: number): { parent: Task | null; idx: number } | null {
+  const idx = tasks.findIndex((t) => t.id === id);
+  if (idx !== -1) return { parent: null, idx };
+  for (const t of tasks) {
+    const sub = t.subTasks;
+    if (sub && sub.length > 0) {
+      const subIdx = sub.findIndex((s) => s.id === id);
+      if (subIdx !== -1) return { parent: t, idx: subIdx };
+      const found = findTaskPath(sub, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findTaskInTree(tasks: Task[], id: number): Task | null {
+  for (const t of tasks) {
+    if (t.id === id) return t;
+    if (t.subTasks?.length) {
+      const found = findTaskInTree(t.subTasks, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function insertIntoTree(tasks: Task[], parentId: number | null, task: Task, idx: number): Task[] {
+  if (parentId === null) {
+    const next = [...tasks];
+    next.splice(Math.min(next.length, idx), 0, task);
+    return next;
+  }
+  return tasks.map((t) => {
+    if (t.id === parentId) {
+      const sub = t.subTasks ?? [];
+      const next = [...sub];
+      next.splice(Math.min(next.length, idx), 0, task);
+      return { ...t, subTasks: next };
+    }
+    if (t.subTasks && t.subTasks.length > 0) {
+      return { ...t, subTasks: insertIntoTree(t.subTasks, parentId, task, idx) };
+    }
+    return t;
+  });
+}
+
+  const columns = useMemo<ColumnDef<Task>[]>(() => {
+    return [
+      {
+        id: "drag",
+        header: () => null,
+        cell: () => (
+          <div className="flex items-center justify-center">
+            <IconGripVertical className="text-muted-foreground size-4" />
+          </div>
+        ),
+        enableResizing: false,
+        size: 40,
+      },
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ getValue, row }) => (
+          <span
+            className="font-medium"
+            style={{ paddingLeft: `${(row as any).depth * 20}px` }}
+          >
+            {getValue() as string}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+        cell: ({ getValue }): React.ReactNode => {
+          const v = getValue() as string | null;
+
+          if (!v) {
+            return (
+              <p className="text-xs text-muted-foreground">
+                <span className="text-muted">No description</span>
+              </p>
+            );
+          }
+
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                  {v}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="start" className="max-w-[400px] break-words">
+                {v}
+              </TooltipContent>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        accessorKey: "creator",
+        header: "Creator",
+        cell: ({ getValue }) => getValue() ?? "—",
+      },
+      {
+        accessorKey: "priority",
+        header: "Priority",
+        cell: ({ getValue }) => (
+          <span className="uppercase text-sm font-semibold">
+            {(getValue() as string) ?? "UNKNOWN"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "dueDate",
+        header: "Due",
+        cell: ({ getValue }) => {
+          const v = getValue() as string | null;
+          return v ? new Date(v).toLocaleDateString() : "—";
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const item = row.original as Task | undefined;
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Edit Task"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openTaskDialog(item, "edit");
+                }}
+                className="text-primary"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Delete Task"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTaskData(item);
+                  setShowTaskDelete(true);
+                }}
+                className="text-destructive"
+                disabled={item?.parentTaskId ? false : (item?.subTasks?.length ?? 0) > 0}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        },
+      },
+    ];
+  }, []);
+  console.log("taskForTable", taskForTableState);
+
+  /* -----------------------------------------------------
    🚦 Render States
   ----------------------------------------------------- */
 
-	if (isLoading) {
+  if (isLoading) {
 		return (
 			<div className="flex w-full h-full items-center justify-center">
 				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -265,65 +418,69 @@ export default function Page() {
 		console.log("kanban changed -> persist these tasks:", updated);
 		setTaskForTableState(updated);
 	};
-	console.log("taskForTable", taskForTable);
+
+	function handleSubTaskClick(st: Task) {
+		setSubTask(st);
+		setSubTaskOpen(true);
+	}
 
 	return (
 		<div className="overflow-y-auto flex-1 min-h-0">
 			{auth.viewMode === ViewMode.KANBAN ? (
-				<>
-					<KanbanFromData
-						statuses={statuses}
-						tasks={paginatedTasks ?? []}
-						onChange={handleChange}
-						open={taskOpen}
-						task={taskData}
-						setTask={setTaskData}
-						setOpen={setTaskOpen}
-						setTaskForTableState={setTaskForTableState}
-					/>
-					<LoadMore
-						onLoadMore={() => setVisibleTaskCount((c) => c + 50)}
-						hasMore={hasMoreTasks}
-						label="Show more tasks"
-					/>
-				</>
+				<KanbanFromData
+					statuses={statuses}
+					tasks={taskForTableState ?? []}
+					onChange={handleChange}
+					open={taskOpen}
+					task={taskData}
+					setTask={setTaskData}
+					setOpen={setTaskOpen}
+					setTaskForTableState={setTaskForTableState}
+				/>
 			) : (
-				<>
-					<div className="flex flex-col flex-1 gap-4 py-4">
-						{/* Untitled List Group */}
-						<Input value="Untitled List" readOnly />
-						<DataTable
-							data={paginatedTasks.filter((t) => !t.listId)}
-							columns={columns}
-							onRowClick={handleRowClick}
-						/>
+				<div className="flex flex-col flex-1 gap-4 py-4">
+{/* Untitled List Group */}
+<Input value="Untitled List" readOnly />
+<DataTable
+  data={rootTasks}
+  columns={columns}
+  state={tableState}
+  getRowId={getRowId}
+  getChildren={getChildren}
+  onExpand={handleExpand}
+  onToggleExpand={handleToggleExpand}
+  onMove={handleMove}
+  onRowClick={handleRowClick}
+  onSortingChange={handleSortingChange}
+  onPaginationChange={handlePaginationChange}
+  onColumnResize={handleColumnResize}
+/>
 
-						{/* Project Lists */}
-						{listForTable?.map((list: List) => {
-							const listTasks = paginatedTasks.filter(
-								(t) => t.listId === list.id,
-							);
+					{/* Project Lists */}
+					{listForTable?.map((list: List) => {
+						const listTasks = listTasksMap[list.id] ?? EMPTY_ARRAY;
 
-							return (
-								<div key={list.id} className="flex flex-col gap-2">
-									<Input value={list.name} readOnly />
-									<DataTable
-										data={listTasks}
-										columns={columns}
-										onRowClick={handleRowClick}
-									/>
-								</div>
-							);
-						})}
-						<LoadMore
-							onLoadMore={() => setVisibleTaskCount((c) => c + 50)}
-							hasMore={hasMoreTasks}
-							label="Show more tasks"
-						/>
-					</div>
-
-					{/* Drawer / Dialogs */}
-				</>
+						return (
+							<div key={list.id} className="flex flex-col gap-2">
+								<Input value={list.name} readOnly />
+<DataTable
+  data={listTasks}
+  columns={columns}
+  state={tableState}
+  getRowId={getRowId}
+  getChildren={getChildren}
+  onExpand={handleExpand}
+  onToggleExpand={handleToggleExpand}
+  onMove={handleMove}
+  onRowClick={handleRowClick}
+  onSortingChange={handleSortingChange}
+  onPaginationChange={handlePaginationChange}
+  onColumnResize={handleColumnResize}
+/>
+							</div>
+						);
+					})}
+				</div>
 			)}
 			<AddTaskDialog
 				showTaskDialog={showTaskDialog}
